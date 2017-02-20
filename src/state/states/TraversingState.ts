@@ -4,9 +4,18 @@ import * as THREE from "three";
 import * as UnitBezier from "@mapbox/unitbezier";
 
 import {IGPano} from "../../API";
-import {IState, StateBase, IRotation, WaitingState} from "../../State";
+import {
+    IRotation,
+    IState,
+    OrbitingState,
+    StateBase,
+    WaitingState,
+} from "../../State";
 import {Node} from "../../Graph";
-import {Camera, Transform} from "../../Geo";
+import {
+    Camera,
+    Transform,
+} from "../../Geo";
 
 class RotationDelta implements IRotation {
     private _phi: number;
@@ -126,6 +135,10 @@ export class TraversingState extends StateBase {
 
         this._desiredLookat = null;
         this._desiredCenter = null;
+    }
+
+    public orbit(): StateBase {
+        return new OrbitingState(this);
     }
 
     public traverse(): StateBase {

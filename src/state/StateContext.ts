@@ -1,13 +1,18 @@
 import {
+    IRotation,
     IStateContext,
-    StateBase,
+    OrbitingState,
     State,
+    StateBase,
     TraversingState,
     WaitingState,
-    IRotation,
 } from "../State";
 import {Node} from "../Graph";
-import {Camera, ILatLonAlt, Transform} from "../Geo";
+import {
+    Camera,
+    ILatLonAlt,
+    Transform,
+} from "../Geo";
 
 export class StateContext implements IStateContext {
     private _state: StateBase;
@@ -23,6 +28,10 @@ export class StateContext implements IStateContext {
         });
     }
 
+    public orbit(): void {
+        this._state = this._state.orbit();
+    }
+
     public traverse(): void {
         this._state = this._state.traverse();
     }
@@ -36,6 +45,8 @@ export class StateContext implements IStateContext {
             return State.Traversing;
         } else if (this._state instanceof WaitingState) {
             return State.Waiting;
+        } else if (this._state instanceof OrbitingState) {
+            return State.Orbiting;
         }
 
         throw new Error("Invalid state");

@@ -125,6 +125,8 @@ export abstract class StateBase implements IState {
         return this._motionless;
     }
 
+    public abstract orbit(): StateBase;
+
     public abstract traverse(): StateBase;
 
     public abstract wait(): StateBase;

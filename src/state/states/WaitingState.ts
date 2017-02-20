@@ -1,5 +1,11 @@
 import {Node} from "../../Graph";
-import {IState, StateBase, IRotation, TraversingState} from "../../State";
+import {
+    IState,
+    IRotation,
+    OrbitingState,
+    StateBase,
+    TraversingState,
+} from "../../State";
 
 export class WaitingState extends StateBase {
     constructor(state: IState) {
@@ -10,6 +16,10 @@ export class WaitingState extends StateBase {
         this._adjustCameras();
 
         this._motionless = this._motionlessTransition();
+    }
+
+    public orbit(): StateBase {
+    return new OrbitingState(this);
     }
 
     public traverse(): StateBase {
