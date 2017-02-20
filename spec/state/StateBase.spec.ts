@@ -9,6 +9,7 @@ import {Node} from "../../src/Graph";
 import {IRotation, IState, StateBase} from "../../src/State";
 
 class TestStateBase extends StateBase {
+    public orbit(): StateBase { return null; }
     public traverse(): StateBase { return null; }
     public wait(): StateBase { return null; }
     public move(delta: number): void { return; }

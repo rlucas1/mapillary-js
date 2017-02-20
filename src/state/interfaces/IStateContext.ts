@@ -4,6 +4,7 @@ import {Node} from "../../Graph";
 export interface IStateContext extends ICurrentState {
     state: State;
 
+    orbit(): void;
     traverse(): void;
     wait(): void;
 
