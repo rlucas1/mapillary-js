@@ -53,6 +53,7 @@ export class MouseComponent extends Component<IMouseConfiguration> {
 
     private _configurationSubscription: Subscription;
     private _flyMovementSubscription: Subscription;
+    private _flyMouseWheelSubscription: Subscription;
 
     constructor(name: string, container: Container, navigator: Navigator) {
         super(name, container, navigator);
@@ -169,6 +170,23 @@ export class MouseComponent extends Component<IMouseConfiguration> {
                     this._processFlyMovement(events, key, camera);
                 });
 
+        this._flyMouseWheelSubscription = this._container.mouseService
+            .filtered$(this._name, this._container.mouseService.mouseWheel$)
+            .withLatestFrom(
+                this._navigator.stateService.state$)
+            .filter(
+                ([event, state]: [WheelEvent, State]): boolean => {
+                    return state === State.Flying;
+                })
+            .map(
+                ([event, state]: [WheelEvent, State]): WheelEvent => {
+                    return event;
+                })
+            .subscribe(
+                (event: WheelEvent): void => {
+                    this._navigator.stateService.dolly(event.wheelDelta * 0.001);
+                });
+
         this._container.mouseService.claimMouse(this._name, 0);
     }
 
@@ -182,6 +200,8 @@ export class MouseComponent extends Component<IMouseConfiguration> {
         this._dragPanHandler.disable();
         this._scrollZoomHandler.disable();
         this._touchZoomHandler.disable();
+        this._flyMovementSubscription.unsubscribe();
+        this._flyMouseWheelSubscription.unsubscribe();
     }
 
     protected _getDefaultConfiguration(): IMouseConfiguration {

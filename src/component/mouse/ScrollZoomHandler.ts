@@ -13,6 +13,7 @@ import {RenderCamera} from "../../Render";
 import {
     ICurrentState,
     IFrame,
+    State,
 } from "../../State";
 import {
     Container,
@@ -59,16 +60,17 @@ export class ScrollZoomHandler extends HandlerBase<IMouseConfiguration> {
             .filtered$(this._component.name, this._container.mouseService.mouseWheel$)
             .withLatestFrom(
                 this._navigator.stateService.currentState$,
-                (w: WheelEvent, f: IFrame): [WheelEvent, IFrame] => {
-                    return [w, f];
+                this._navigator.stateService.state$,
+                (w: WheelEvent, f: IFrame, s: State): [WheelEvent, IFrame, State] => {
+                    return [w, f, s];
                 })
             .filter(
-                (args: [WheelEvent, IFrame]): boolean => {
+                (args: [WheelEvent, IFrame, State]): boolean => {
                     let state: ICurrentState = args[1].state;
-                    return state.currentNode.fullPano || state.nodesAhead < 1;
+                    return args[2] !== State.Flying && (state.currentNode.fullPano || state.nodesAhead < 1);
                 })
             .map(
-                (args: [WheelEvent, IFrame]): WheelEvent => {
+                (args: [WheelEvent, IFrame, State]): WheelEvent => {
                     return args[0];
                 })
             .withLatestFrom(

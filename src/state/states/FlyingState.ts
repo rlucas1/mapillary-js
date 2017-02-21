@@ -55,6 +55,11 @@ export class FlyingState extends StateBase {
 
     public zoomIn(delta: number, reference: number[]): void { /*noop*/ }
 
+    public dolly(delta: number): void {
+        console.log("dolly", delta);
+        this._applyDolly(this._currentCamera, delta);
+    }
+
     public truck(delta: number[]): void {
         console.log("truck", delta);
         this._applyTruck(this._currentCamera, delta);
@@ -134,14 +139,14 @@ export class FlyingState extends StateBase {
     }
 
     private _applyTruck(camera: Camera, delta: number[]): void {
-        let d: THREE.Vector3 = new THREE.Vector3();
-        d.copy(camera.lookat).sub(camera.position);
-        let length: number = d.length();
+        let offset: THREE.Vector3 = new THREE.Vector3();
+        offset.copy(camera.lookat).sub(camera.position);
+        let length: number = offset.length();
 
         let vx: THREE.Vector3 = new THREE.Vector3();
-        vx.copy(d).cross(camera.up).normalize();
+        vx.copy(offset).cross(camera.up).normalize();
         let vy: THREE.Vector3 = new THREE.Vector3();
-        vy.copy(d).cross(vx).normalize();
+        vy.copy(offset).cross(vx).normalize();
 
         vx.multiplyScalar(-delta[0] * length);
         vy.multiplyScalar(-delta[1] * length);
@@ -150,6 +155,17 @@ export class FlyingState extends StateBase {
         camera.lookat.add(vy);
         camera.position.add(vx);
         camera.position.add(vy);
+    }
+
+    private _applyDolly(camera: Camera, delta: number): void {
+        let offset: THREE.Vector3 = new THREE.Vector3();
+        offset.copy(camera.position).sub(camera.lookat);
+        let length: number = offset.length();
+        let scaled: number = length * Math.pow(2, -delta);
+        let clipped: number = Math.max(1, Math.min(scaled, 1000));
+        offset.normalize();
+        offset.multiplyScalar(clipped);
+        camera.position.copy(camera.lookat).add(offset);
     }
 }
 

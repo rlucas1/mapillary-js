@@ -181,6 +181,10 @@ export class StateContext implements IStateContext {
         this._state.zoomIn(delta, reference);
     }
 
+    public dolly(delta: number): void {
+        this._state.dolly(delta);
+    }
+
     public truck(delta: number[]): void {
         this._state.truck(delta);
     }
