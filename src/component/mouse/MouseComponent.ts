@@ -54,7 +54,7 @@ export class MouseComponent extends Component<IMouseConfiguration> {
     private _touchZoomHandler: TouchZoomHandler;
 
     private _configurationSubscription: Subscription;
-    private _orbitMovementSubscription: Subscription;
+    private _flyMovementSubscription: Subscription;
 
     constructor(name: string, container: Container, navigator: Navigator) {
         super(name, container, navigator);
@@ -161,7 +161,7 @@ export class MouseComponent extends Component<IMouseConfiguration> {
         return { doubleClickZoom: true, dragPan: true, scrollZoom: true, touchZoom: true };
     }
 
-    private _processOrbitMovement(events: MouseTouchPair, r: RenderCamera): IRotation {
+    private _processFlyMovement(events: MouseTouchPair, r: RenderCamera): IRotation {
         let element: HTMLElement = this._container.element;
 
         let previousEvent: MouseEvent | Touch = events[0];
