@@ -208,6 +208,22 @@ export class MouseComponent extends Component<IMouseConfiguration> {
         return { doubleClickZoom: true, dragPan: true, scrollZoom: true, touchZoom: true };
     }
 
+    protected _orbitDeltaFromMovement(events: MouseTouchPair, camera: RenderCamera): IRotation {
+        let element: HTMLElement = this._container.element;
+        let size: number = Math.max(element.offsetWidth, element.offsetHeight);
+
+        let previousEvent: MouseEvent | Touch = events[0];
+        let event: MouseEvent | Touch = events[1];
+
+        let movementX: number = event.clientX - previousEvent.clientX;
+        let movementY: number = event.clientY - previousEvent.clientY;
+
+        return {
+            phi: -Math.PI * movementX / size,
+            theta: -Math.PI * movementY / size,
+        };
+    };
+
     protected _processFlyMovement(events: MouseTouchPair, keyEvent: KeyboardEvent, camera: RenderCamera): void {
         if (keyEvent.shiftKey) {
             this._navigator.stateService.truck(this._truckDeltaFromMovement(events, camera));
