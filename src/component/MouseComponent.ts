@@ -71,6 +71,7 @@ export class MouseComponent extends Component<IComponentConfiguration> {
     private _mouseWheelSubscription: Subscription;
     private _pinchSubscription: Subscription;
     private _flyMovementSubscription: Subscription;
+    private _flyMouseWheelSubscription: Subscription;
 
     constructor(name: string, container: Container, navigator: Navigator) {
         super(name, container, navigator);
@@ -315,17 +316,15 @@ export class MouseComponent extends Component<IComponentConfiguration> {
             .filtered$(this._name, this._container.mouseService.mouseWheel$)
             .withLatestFrom(
                 this._navigator.stateService.currentState$,
-                (w: WheelEvent, f: IFrame): [WheelEvent, IFrame] => {
-                    return [w, f];
+                this._navigator.stateService.state$)
+            .filter(  /* tslint:disable-next-line:no-unused-variable */
+                ([event, frame, state]: [WheelEvent, IFrame, State]): boolean => {
+                    return state !== State.Flying &&
+                           (frame.state.currentNode.fullPano || frame.state.nodesAhead < 1);
                 })
-            .filter(
-                (args: [WheelEvent, IFrame]): boolean => {
-                    let state: ICurrentState = args[1].state;
-                    return state.currentNode.fullPano || state.nodesAhead < 1;
-                })
-            .map(
-                (args: [WheelEvent, IFrame]): WheelEvent => {
-                    return args[0];
+            .map(  /* tslint:disable-next-line:no-unused-variable */
+                ([event, frame, state]: [WheelEvent, IFrame, State]): WheelEvent => {
+                    return event;
                 })
             .withLatestFrom(
                 this._container.renderService.renderCamera$,
@@ -523,6 +522,22 @@ export class MouseComponent extends Component<IComponentConfiguration> {
                     this._processFlyMovement(movement, key, camera);
                 });
 
+        this._flyMouseWheelSubscription = this._container.mouseService
+            .filtered$(this._name, this._container.mouseService.mouseWheel$)
+            .withLatestFrom(
+                this._navigator.stateService.state$)
+            .filter(  /* tslint:disable-next-line:no-unused-variable */
+                ([event, state]: [WheelEvent, State]): boolean => {
+                    return state === State.Flying;
+                })
+            .map(  /* tslint:disable-next-line:no-unused-variable */
+                ([event, state]: [WheelEvent, State]): IMovement => {
+                    return event;
+                })
+            .subscribe(
+                (event: WheelEvent): void => {
+                    this._navigator.stateService.dolly(event.wheelDelta * 0.001);
+                });
 
         this._container.mouseService.claimMouse(this._name, 0);
     }
@@ -537,6 +552,8 @@ export class MouseComponent extends Component<IComponentConfiguration> {
         this._movementSubscription.unsubscribe();
         this._mouseWheelSubscription.unsubscribe();
         this._pinchSubscription.unsubscribe();
+        this._flyMovementSubscription.unsubscribe();
+        this._flyMouseWheelSubscription.unsubscribe();
     }
 
     protected _getDefaultConfiguration(): IComponentConfiguration {
