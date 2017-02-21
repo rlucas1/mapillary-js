@@ -464,9 +464,9 @@ export class StateService {
         this._invokeContextOperation((context: IStateContext) => { context.translate(delta); });
     }
 
-    public orbitAround(delta: IRotation): void {
+    public orbit(delta: IRotation): void {
         this._inMotionOperation$.next(true);
-        this._invokeContextOperation((context: IStateContext) => { context.orbitAround(delta); });
+        this._invokeContextOperation((context: IStateContext) => { context.orbit(delta); });
     }
 
     public getCenter(): Observable<number[]> {

@@ -147,7 +147,7 @@ export abstract class StateBase implements IState {
 
     public translate(delta: number[]): void {}
 
-    public orbitAround(delta: IRotation): void {}
+    public orbit(delta: IRotation): void {}
 
     public abstract update(fps: number): void;
 

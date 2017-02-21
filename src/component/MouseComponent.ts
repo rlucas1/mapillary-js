@@ -524,7 +524,7 @@ export class MouseComponent extends Component<IComponentConfiguration> {
                 (rotation: IRotation): void => {
                     this._navigator.stateService.rotate(rotation);
                     // this._navigator.stateService.translate(rotation);
-                    // this._navigator.stateService.orbitAround(rotation);
+                    // this._navigator.stateService.orbit(rotation);
                 });
 
 
