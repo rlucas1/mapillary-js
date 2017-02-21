@@ -37,6 +37,11 @@ export class FlyingState extends StateBase {
         this._applyDolly(this._camera, delta);
     }
 
+    public dolly(delta: number): void {
+        console.log("dolly", delta);
+        this._applyDolly(this._currentCamera, delta);
+    }
+
     public truck(delta: number[]): void {
         this._applyTruck(this._camera, delta);
     }
