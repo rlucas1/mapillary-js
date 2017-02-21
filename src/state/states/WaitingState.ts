@@ -17,7 +17,7 @@ export class WaitingState extends StateBase {
     }
 
     public orbit(): StateBase {
-    return new OrbitingState(this);
+        return new OrbitingState(this);
     }
 
     public traverse(): StateBase {

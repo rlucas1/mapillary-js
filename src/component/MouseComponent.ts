@@ -30,6 +30,8 @@ import {
 import {
     ICurrentState,
     IFrame,
+    IRotation,
+    State,
 } from "../State";
 import {
     Container,
@@ -68,6 +70,7 @@ export class MouseComponent extends Component<IComponentConfiguration> {
     private _movementSubscription: Subscription;
     private _mouseWheelSubscription: Subscription;
     private _pinchSubscription: Subscription;
+    private _orbitMovementSubscription: Subscription;
 
     constructor(name: string, container: Container, navigator: Navigator) {
         super(name, container, navigator);
@@ -498,6 +501,41 @@ export class MouseComponent extends Component<IComponentConfiguration> {
                     this._navigator.stateService.rotateBasicUnbounded([basicX, basicY]);
                 });
 
+
+        let shiftKeyPressed = Observable
+            .fromEvent(document, "keydown")
+            .map(
+                (event: KeyboardEvent): boolean => {
+                    return event.shiftKey;
+                })
+            .distinctUntilChanged();
+
+
+        this._orbitMovementSubscription = Observable
+            .merge(
+                mouseMovement$,
+                touchMovement$)
+            .withLatestFrom(
+                this._navigator.stateService.state$)
+            .filter(
+                ([movement, state]: [IMovement, State]): boolean => {
+                    return state === State.Orbiting;
+                })
+            .map(
+                ([movement, state]: [IMovement, State]): IMovement => {
+                    return movement;
+                })
+            .withLatestFrom(
+                this._container.renderService.renderCamera$,
+                this._processOrbitMovement.bind(this))
+            .subscribe(
+                (rotation: IRotation): void => {
+                    this._navigator.stateService.rotate(rotation);
+                    // this._navigator.stateService.translate(rotation);
+                    // this._navigator.stateService.orbitAround(rotation);
+                });
+
+
         this._container.mouseService.claimMouse(this._name, 0);
     }
 
@@ -515,6 +553,36 @@ export class MouseComponent extends Component<IComponentConfiguration> {
 
     protected _getDefaultConfiguration(): IComponentConfiguration {
         return {};
+    }
+
+    protected _processOrbitMovement(m: IMovement, r: RenderCamera): IRotation {
+
+        let element: HTMLElement = this._container.element;
+
+        let offsetWidth: number = element.offsetWidth;
+        let offsetHeight: number = element.offsetHeight;
+
+        let clientRect: ClientRect = element.getBoundingClientRect();
+
+        let canvasX: number = m.clientX - clientRect.left;
+        let canvasY: number = m.clientY - clientRect.top;
+
+        let direction: THREE.Vector3 =
+            this._viewportCoords.unprojectFromCanvas(canvasX, canvasY, offsetWidth, offsetHeight, r.perspective)
+            .sub(r.perspective.position);
+
+        let directionX: THREE.Vector3 =
+            this._viewportCoords.unprojectFromCanvas(canvasX - m.movementX, canvasY, offsetWidth, offsetHeight, r.perspective)
+            .sub(r.perspective.position);
+
+        let directionY: THREE.Vector3 =
+            this._viewportCoords.unprojectFromCanvas(canvasX, canvasY - m.movementY, offsetWidth, offsetHeight, r.perspective)
+            .sub(r.perspective.position);
+
+        let phi: number = (m.movementX > 0 ? 1 : -1) * directionX.angleTo(direction);
+        let theta: number = (m.movementY > 0 ? -1 : 1) * directionY.angleTo(direction);
+
+        return { phi: phi, theta: theta };
     }
 }
 
