@@ -189,6 +189,20 @@ export class MouseComponent extends Component<IMouseConfiguration> {
 
         return { phi: phi, theta: theta };
     }
+
+    protected _truckDeltaFromMovement(events: MouseTouchPair, camera: RenderCamera): number[] {
+        let element: HTMLElement = this._container.element;
+        let size: number = Math.max(element.offsetWidth, element.offsetHeight);
+
+        let previousEvent: MouseEvent | Touch = events[0];
+        let event: MouseEvent | Touch = events[1];
+
+        let movementX: number = event.clientX - previousEvent.clientX;
+        let movementY: number = event.clientY - previousEvent.clientY;
+
+        return [movementX / size,
+                movementY / size];
+    };
 }
 
 ComponentService.register(MouseComponent);
