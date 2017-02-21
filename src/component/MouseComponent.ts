@@ -178,12 +178,12 @@ export class MouseComponent extends Component<IComponentConfiguration> {
             .withLatestFrom(
                 this._navigator.stateService.currentState$,
                 this._navigator.stateService.state$)
-            .filter(
+            .filter(  /* tslint:disable-next-line:no-unused-variable */
                 ([movement, frame, state]: [IMovement, IFrame, State]): boolean => {
                     return state !== State.Flying &&
                            (frame.state.currentNode.fullPano || frame.state.nodesAhead < 1);
                 })
-            .map(
+            .map(  /* tslint:disable-next-line:no-unused-variable */
                 ([movement, frame, state]: [IMovement, IFrame, State]): IMovement => {
                     return movement;
                 })
@@ -192,7 +192,7 @@ export class MouseComponent extends Component<IComponentConfiguration> {
                 this._navigator.stateService.currentTransform$,
                 this._navigator.stateService.currentCamera$,
                 (movement: IMovement, render: RenderCamera, transform: Transform, camera: Camera): number[] => {
-                    camera = camera.clone()
+                    camera = camera.clone();
 
                     let element: HTMLElement = this._container.element;
 
@@ -494,7 +494,7 @@ export class MouseComponent extends Component<IComponentConfiguration> {
                 });
 
 
-        let shiftKeyPressed = Observable
+        let shiftKeyPressed: Observable<boolean> = Observable
             .merge(
                 Observable.fromEvent(document, "keydown"),
                 Observable.fromEvent(document, "keyup"))
@@ -511,11 +511,11 @@ export class MouseComponent extends Component<IComponentConfiguration> {
                 touchMovement$)
             .withLatestFrom(
                 this._navigator.stateService.state$)
-            .filter(
+            .filter(  /* tslint:disable-next-line:no-unused-variable */
                 ([movement, state]: [IMovement, State]): boolean => {
                     return state === State.Flying;
                 })
-            .map(
+            .map(  /* tslint:disable-next-line:no-unused-variable */
                 ([movement, state]: [IMovement, State]): IMovement => {
                     return movement;
                 })
@@ -548,7 +548,6 @@ export class MouseComponent extends Component<IComponentConfiguration> {
     }
 
     protected _processFlyMovement(movement: IMovement, shiftKey: boolean, camera: RenderCamera): void {
-        console.log('shiftKey', shiftKey);
         if (shiftKey) {
             this._navigator.stateService.orbit(this._rotationDeltaFromMovement(movement, camera));
         } else {
@@ -582,7 +581,7 @@ export class MouseComponent extends Component<IComponentConfiguration> {
         let phi: number = (movement.movementX > 0 ? 1 : -1) * directionX.angleTo(direction);
         let theta: number = (movement.movementY > 0 ? -1 : 1) * directionY.angleTo(direction);
 
-        return { phi: phi, theta: theta }
+        return { phi: phi, theta: theta };
     };
 
 }
