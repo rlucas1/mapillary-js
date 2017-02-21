@@ -185,7 +185,7 @@ export class StateContext implements IStateContext {
         this._state.translate(delta);
     }
 
-    public orbitAround(delta: IRotation): void {
-        this._state.orbitAround(delta);
+    public orbit(delta: IRotation): void {
+        this._state.orbit(delta);
     }
 }

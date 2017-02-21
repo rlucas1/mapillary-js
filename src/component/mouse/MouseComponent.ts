@@ -170,7 +170,7 @@ export class MouseComponent extends Component<IMouseConfiguration> {
                 (rotation: IRotation): void => {
                     this._navigator.stateService.rotate(rotation);
                     // this._navigator.stateService.translate(rotation);
-                    // this._navigator.stateService.orbitAround(rotation);
+                    // this._navigator.stateService.orbit(rotation);
                 });
 
         this._container.mouseService.claimMouse(this._name, 0);

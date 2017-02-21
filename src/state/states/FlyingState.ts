@@ -11,12 +11,12 @@ import {
     Transform,
 } from "../../Geo";
 
-export class OrbitingState extends StateBase {
+export class FlyingState extends StateBase {
     constructor(state: IState) {
         super(state);
     }
 
-    public orbit(): StateBase {
+    public fly(): StateBase {
         throw new Error("Not implemented");
     }
 
@@ -60,7 +60,7 @@ export class OrbitingState extends StateBase {
         console.log('translate', delta);
     }
 
-    public orbitAround(delta: IRotation): void {
+    public orbit(delta: IRotation): void {
         console.log('translate', delta);
     }
 
@@ -105,4 +105,4 @@ export class OrbitingState extends StateBase {
     }
 }
 
-export default OrbitingState;
+export default FlyingState;
