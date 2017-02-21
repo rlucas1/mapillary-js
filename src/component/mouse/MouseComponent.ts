@@ -52,7 +52,7 @@ export class MouseComponent extends Component<IMouseConfiguration> {
     private _touchZoomHandler: TouchZoomHandler;
 
     private _configurationSubscription: Subscription;
-    private _orbitMovementSubscription: Subscription;
+    private _flyMovementSubscription: Subscription;
 
     constructor(name: string, container: Container, navigator: Navigator) {
         super(name, container, navigator);
@@ -145,7 +145,7 @@ export class MouseComponent extends Component<IMouseConfiguration> {
                 })
             .distinctUntilChanged();
 
-        this._orbitMovementSubscription = Observable
+        this._flyMovementSubscription = Observable
             .merge(
                 this._container.mouseService.filtered$(this._name, this._container.mouseService.mouseDrag$),
                 this._container.touchService.singleTouchDrag$
@@ -156,7 +156,7 @@ export class MouseComponent extends Component<IMouseConfiguration> {
             .withLatestFrom(this._navigator.stateService.state$)
             .filter(
                 ([event, state]: [MouseEvent | Touch, State]): boolean => {
-                    return state === State.Orbiting;
+                    return state === State.Flying;
                 })
             .map(
                 ([event, state]: [MouseEvent | Touch, State]): MouseEvent | Touch => {
@@ -165,7 +165,7 @@ export class MouseComponent extends Component<IMouseConfiguration> {
             .pairwise()
             .withLatestFrom(
                 this._container.renderService.renderCamera$,
-                this._processOrbitMovement.bind(this))
+                this._processFlyMovement.bind(this))
             .subscribe(
                 (rotation: IRotation): void => {
                     this._navigator.stateService.rotate(rotation);
@@ -192,7 +192,7 @@ export class MouseComponent extends Component<IMouseConfiguration> {
         return { doubleClickZoom: true, dragPan: true, scrollZoom: true, touchZoom: true };
     }
 
-    private _processOrbitMovement(events: MouseTouchPair, r: RenderCamera): IRotation {
+    private _processFlyMovement(events: MouseTouchPair, r: RenderCamera): IRotation {
         let element: HTMLElement = this._container.element;
 
         let previousEvent: MouseEvent | Touch = events[0];
