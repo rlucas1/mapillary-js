@@ -181,8 +181,8 @@ export class StateContext implements IStateContext {
         this._state.zoomIn(delta, reference);
     }
 
-    public translate(delta: number[]): void {
-        this._state.translate(delta);
+    public truck(delta: number[]): void {
+        this._state.truck(delta);
     }
 
     public orbit(delta: IRotation): void {

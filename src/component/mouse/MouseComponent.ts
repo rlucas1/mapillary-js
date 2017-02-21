@@ -137,14 +137,10 @@ export class MouseComponent extends Component<IMouseConfiguration> {
                     }
                 });
 
-        let shiftKeyPressed = Observable
+        let keyboardEvent: Observable<KeyboardEvent> = Observable
             .merge(
-                Observable.fromEvent(document, "keydown"),
-                Observable.fromEvent(document, "keyup"))
-            .map(
-                (event: KeyboardEvent): boolean => {
-                    return event.shiftKey;
-                })
+                Observable.fromEvent<KeyboardEvent>(document, "keydown"),
+                Observable.fromEvent<KeyboardEvent>(document, "keyup"))
             .distinctUntilChanged();
 
         this._flyMovementSubscription = Observable
@@ -166,11 +162,11 @@ export class MouseComponent extends Component<IMouseConfiguration> {
                 })
             .pairwise()
             .withLatestFrom(
-                shiftKeyPressed,
+                keyboardEvent,
                 this._container.renderService.renderCamera$)
             .subscribe(
-                ([events, shiftKey, camera]: [MouseTouchPair, boolean, RenderCamera]): void => {
-                    this._processFlyMovement(events, shiftKey, camera);
+                ([events, key, camera]: [MouseTouchPair, KeyboardEvent, RenderCamera]): void => {
+                    this._processFlyMovement(events, key, camera);
                 });
 
         this._container.mouseService.claimMouse(this._name, 0);
@@ -192,12 +188,15 @@ export class MouseComponent extends Component<IMouseConfiguration> {
         return { doubleClickZoom: true, dragPan: true, scrollZoom: true, touchZoom: true };
     }
 
-    private _processFlyMovement(events: MouseTouchPair, shiftKey: boolean, camera: RenderCamera): void {
-        console.log('shiftKey', shiftKey);
-        if (shiftKey) {
-            this._navigator.stateService.orbit(this._rotationDeltaFromMovement(events, camera));
+    protected _processFlyMovement(events: MouseTouchPair, keyEvent: KeyboardEvent, camera: RenderCamera): void {
+        if (keyEvent.shiftKey) {
+            this._navigator.stateService.truck(this._truckDeltaFromMovement(events, camera));
         } else {
-            this._navigator.stateService.rotate(this._rotationDeltaFromMovement(events, camera));
+            if (keyEvent.ctrlKey || keyEvent.metaKey) {
+                this._navigator.stateService.orbit(this._rotationDeltaFromMovement(events, camera));
+            } else {
+                this._navigator.stateService.rotate(this._rotationDeltaFromMovement(events, camera));
+            }
         }
     }
 
@@ -229,6 +228,20 @@ export class MouseComponent extends Component<IMouseConfiguration> {
 
         return { phi: phi, theta: theta };
     }
+
+    protected _truckDeltaFromMovement(events: MouseTouchPair, camera: RenderCamera): number[] {
+        let element: HTMLElement = this._container.element;
+        let size: number = Math.max(element.offsetWidth, element.offsetHeight);
+
+        let previousEvent: MouseEvent | Touch = events[0];
+        let event: MouseEvent | Touch = events[1];
+
+        let movementX: number = event.clientX - previousEvent.clientX;
+        let movementY: number = event.clientY - previousEvent.clientY;
+
+        return [movementX / size,
+                movementY / size];
+    };
 }
 
 ComponentService.register(MouseComponent);
