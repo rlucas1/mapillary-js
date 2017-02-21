@@ -8,7 +8,6 @@ import {
 } from "../../State";
 import {
     Camera,
-    Transform,
 } from "../../Geo";
 
 export class FlyingState extends StateBase {
@@ -37,31 +36,31 @@ export class FlyingState extends StateBase {
     }
 
     public rotate(delta: IRotation): void {
-        console.log('rotate');
+        console.log("rotate");
         this._applyRotation(this._currentCamera, delta);
     }
 
     public rotateBasic(basicRotation: number[]): void {
-        console.log('rotateBasic');
+        console.log("rotateBasic");
         throw new Error("Not implemented");
     }
 
     public rotateBasicUnbounded(basicRotation: number[]): void {
-        console.log('rotateBasicUnbounded');
+        console.log("rotateBasicUnbounded");
     }
 
     public rotateToBasic(basic: number[]): void {
-        console.log('rotateToBasic');
+        console.log("rotateToBasic");
     }
 
     public zoomIn(delta: number, reference: number[]): void { /*noop*/ }
 
     public translate(delta: number[]): void {
-        console.log('translate', delta);
+        console.log("translate", delta);
     }
 
     public orbit(delta: IRotation): void {
-        console.log('orbit', delta);
+        console.log("orbit", delta);
         this._applyOribit(this._currentCamera, delta);
     }
 
