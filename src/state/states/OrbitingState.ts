@@ -56,6 +56,14 @@ export class OrbitingState extends StateBase {
 
     public zoomIn(delta: number, reference: number[]): void { /*noop*/ }
 
+    public translate(delta: number[]): void {
+        console.log('translate', delta);
+    }
+
+    public orbitAround(delta: IRotation): void {
+        console.log('translate', delta);
+    }
+
     public update(fps: number): void {
         this._camera.copy(this._currentCamera);
      }

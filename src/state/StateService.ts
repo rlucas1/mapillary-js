@@ -451,6 +451,16 @@ export class StateService {
         this._invokeContextOperation((context: IStateContext) => { context.zoomIn(delta, reference); });
     }
 
+    public translate(delta: number[]): void {
+        this._inMotionOperation$.next(true);
+        this._invokeContextOperation((context: IStateContext) => { context.translate(delta); });
+    }
+
+    public orbitAround(delta: IRotation): void {
+        this._inMotionOperation$.next(true);
+        this._invokeContextOperation((context: IStateContext) => { context.orbitAround(delta); });
+    }
+
     public getCenter(): Observable<number[]> {
         return this._lastState$
             .first()
