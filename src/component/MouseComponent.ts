@@ -170,37 +170,29 @@ export class MouseComponent extends Component<IComponentConfiguration> {
                         };
                     });
 
+
         this._movementSubscription = Observable
             .merge(
                 mouseMovement$,
                 touchMovement$)
             .withLatestFrom(
                 this._navigator.stateService.currentState$,
-                (m: IMovement, f: IFrame): [IMovement, IFrame] => {
-                    return [m, f];
-                })
+                this._navigator.stateService.state$)
             .filter(
-                (args: [IMovement, IFrame]): boolean => {
-                    let state: ICurrentState = args[1].state;
-                    return state.currentNode.fullPano || state.nodesAhead < 1;
+                ([movement, frame, state]: [IMovement, IFrame, State]): boolean => {
+                    return state !== State.Orbiting &&
+                           (frame.state.currentNode.fullPano || frame.state.nodesAhead < 1);
                 })
             .map(
-                (args: [IMovement, IFrame]): IMovement => {
-                    return args[0];
+                ([movement, frame, state]: [IMovement, IFrame, State]): IMovement => {
+                    return movement;
                 })
             .withLatestFrom(
                 this._container.renderService.renderCamera$,
                 this._navigator.stateService.currentTransform$,
                 this._navigator.stateService.currentCamera$,
-                (m: IMovement, r: RenderCamera, t: Transform, c: Camera): [IMovement, RenderCamera, Transform, Camera] => {
-                    return [m, r, t, c];
-                })
-            .map(
-                (args: [IMovement, RenderCamera, Transform, Camera]): number[] => {
-                    let movement: IMovement = args[0];
-                    let render: RenderCamera = args[1];
-                    let transform: Transform = args[2];
-                    let camera: Camera = args[3].clone();
+                (movement: IMovement, render: RenderCamera, transform: Transform, camera: Camera): number[] => {
+                    camera = camera.clone()
 
                     let element: HTMLElement = this._container.element;
 
