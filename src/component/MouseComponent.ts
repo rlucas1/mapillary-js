@@ -494,14 +494,10 @@ export class MouseComponent extends Component<IComponentConfiguration> {
                 });
 
 
-        let shiftKeyPressed: Observable<boolean> = Observable
+        let keyboardEvent: Observable<KeyboardEvent> = Observable
             .merge(
                 Observable.fromEvent(document, "keydown"),
                 Observable.fromEvent(document, "keyup"))
-            .map(
-                (event: KeyboardEvent): boolean => {
-                    return event.shiftKey;
-                })
             .distinctUntilChanged();
 
 
@@ -520,11 +516,11 @@ export class MouseComponent extends Component<IComponentConfiguration> {
                     return movement;
                 })
             .withLatestFrom(
-                shiftKeyPressed,
+                keyboardEvent,
                 this._container.renderService.renderCamera$)
             .subscribe(
-                ([movement, shiftKey, camera]: [IMovement, boolean, RenderCamera]): void => {
-                    this._processFlyMovement(movement, shiftKey, camera);
+                ([movement, key, camera]: [IMovement, KeyboardEvent, RenderCamera]): void => {
+                    this._processFlyMovement(movement, key, camera);
                 });
 
 
@@ -547,11 +543,15 @@ export class MouseComponent extends Component<IComponentConfiguration> {
         return {};
     }
 
-    protected _processFlyMovement(movement: IMovement, shiftKey: boolean, camera: RenderCamera): void {
-        if (shiftKey) {
-            this._navigator.stateService.orbit(this._rotationDeltaFromMovement(movement, camera));
+    protected _processFlyMovement(movement: IMovement, keyEvent: KeyboardEvent, camera: RenderCamera): void {
+        if (keyEvent.shiftKey) {
+            this._navigator.stateService.truck(this._truckDeltaFromMovement(movement, camera));
         } else {
-            this._navigator.stateService.rotate(this._rotationDeltaFromMovement(movement, camera));
+            if (keyEvent.ctrlKey || keyEvent.metaKey) {
+                this._navigator.stateService.orbit(this._rotationDeltaFromMovement(movement, camera));
+            } else {
+                this._navigator.stateService.rotate(this._rotationDeltaFromMovement(movement, camera));
+            }
         }
     }
 
@@ -582,6 +582,13 @@ export class MouseComponent extends Component<IComponentConfiguration> {
         let theta: number = (movement.movementY > 0 ? -1 : 1) * directionY.angleTo(direction);
 
         return { phi: phi, theta: theta };
+    };
+
+    protected _truckDeltaFromMovement(movement: IMovement, camera: RenderCamera): number[] {
+        let element: HTMLElement = this._container.element;
+        let size: number = Math.max(element.offsetWidth, element.offsetHeight);
+        return [movement.movementX / size,
+                movement.movementY / size];
     };
 
 }

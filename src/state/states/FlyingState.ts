@@ -55,8 +55,9 @@ export class FlyingState extends StateBase {
 
     public zoomIn(delta: number, reference: number[]): void { /*noop*/ }
 
-    public translate(delta: number[]): void {
-        console.log("translate", delta);
+    public truck(delta: number[]): void {
+        console.log("truck", delta);
+        this._applyTruck(this._currentCamera, delta);
     }
 
     public orbit(delta: IRotation): void {
@@ -130,6 +131,25 @@ export class FlyingState extends StateBase {
         offset.applyQuaternion(qInverse);
 
         camera.position.copy(camera.lookat).add(offset.multiplyScalar(length));
+    }
+
+    private _applyTruck(camera: Camera, delta: number[]): void {
+        let d: THREE.Vector3 = new THREE.Vector3();
+        d.copy(camera.lookat).sub(camera.position);
+        let length: number = d.length();
+
+        let vx: THREE.Vector3 = new THREE.Vector3();
+        vx.copy(d).cross(camera.up).normalize();
+        let vy: THREE.Vector3 = new THREE.Vector3();
+        vy.copy(d).cross(vx).normalize();
+
+        vx.multiplyScalar(-delta[0] * length);
+        vy.multiplyScalar(-delta[1] * length);
+
+        camera.lookat.add(vx);
+        camera.lookat.add(vy);
+        camera.position.add(vx);
+        camera.position.add(vy);
     }
 }
 

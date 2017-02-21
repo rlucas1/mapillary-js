@@ -24,7 +24,7 @@ export interface IStateContext extends ICurrentState {
     move(delta: number): void;
     moveTo(position: number): void;
     zoomIn(delta: number, reference: number[]): void;
-    translate(delta: number[]): void;
+    truck(delta: number[]): void;
     orbit(delta: IRotation): void;
 
     getCenter(): number[];

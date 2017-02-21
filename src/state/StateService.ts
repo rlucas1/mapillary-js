@@ -459,9 +459,9 @@ export class StateService {
         this._invokeContextOperation((context: IStateContext) => { context.zoomIn(delta, reference); });
     }
 
-    public translate(delta: number[]): void {
+    public truck(delta: number[]): void {
         this._inMotionOperation$.next(true);
-        this._invokeContextOperation((context: IStateContext) => { context.translate(delta); });
+        this._invokeContextOperation((context: IStateContext) => { context.truck(delta); });
     }
 
     public orbit(delta: IRotation): void {
