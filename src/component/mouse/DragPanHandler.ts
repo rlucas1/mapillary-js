@@ -20,7 +20,10 @@ import {
 import {
     RenderCamera,
 } from "../../Render";
-import {IFrame} from "../../State";
+import {
+    IFrame,
+    State,
+} from "../../State";
 import {
     Container,
     Navigator,
@@ -125,10 +128,13 @@ export class DragPanHandler extends HandlerBase<IMouseConfiguration> {
                 touchMovingStopped$)
             .subscribe(this._container.touchService.activate$);
 
-        this._rotateBasicSubscription = this._navigator.stateService.currentState$
+        this._rotateBasicSubscription = Observable
+            .combineLatest(
+                this._navigator.stateService.currentState$,
+                this._navigator.stateService.state$)
             .map(
-                (frame: IFrame): boolean => {
-                    return frame.state.currentNode.fullPano || frame.state.nodesAhead < 1;
+                ([frame, state]: [IFrame, State]): boolean => {
+                    return state !== State.Orbiting && (frame.state.currentNode.fullPano || frame.state.nodesAhead < 1);
                 })
             .distinctUntilChanged()
             .switchMap(
