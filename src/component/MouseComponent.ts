@@ -495,7 +495,9 @@ export class MouseComponent extends Component<IComponentConfiguration> {
 
 
         let shiftKeyPressed = Observable
-            .fromEvent(document, "keydown")
+            .merge(
+                Observable.fromEvent(document, "keydown"),
+                Observable.fromEvent(document, "keyup"))
             .map(
                 (event: KeyboardEvent): boolean => {
                     return event.shiftKey;
@@ -518,13 +520,11 @@ export class MouseComponent extends Component<IComponentConfiguration> {
                     return movement;
                 })
             .withLatestFrom(
-                this._container.renderService.renderCamera$,
-                this._processFlyMovement.bind(this))
+                shiftKeyPressed,
+                this._container.renderService.renderCamera$)
             .subscribe(
-                (rotation: IRotation): void => {
-                    this._navigator.stateService.rotate(rotation);
-                    // this._navigator.stateService.translate(rotation);
-                    // this._navigator.stateService.orbit(rotation);
+                ([movement, shiftKey, camera]: [IMovement, boolean, RenderCamera]): void => {
+                    this._processFlyMovement(movement, shiftKey, camera);
                 });
 
 
@@ -547,8 +547,16 @@ export class MouseComponent extends Component<IComponentConfiguration> {
         return {};
     }
 
-    protected _processFlyMovement(m: IMovement, r: RenderCamera): IRotation {
+    protected _processFlyMovement(movement: IMovement, shiftKey: boolean, camera: RenderCamera): void {
+        console.log('shiftKey', shiftKey);
+        if (shiftKey) {
+            this._navigator.stateService.orbit(this._rotationDeltaFromMovement(movement, camera));
+        } else {
+            this._navigator.stateService.rotate(this._rotationDeltaFromMovement(movement, camera));
+        }
+    }
 
+    protected _rotationDeltaFromMovement(movement: IMovement, camera: RenderCamera): IRotation {
         let element: HTMLElement = this._container.element;
 
         let offsetWidth: number = element.offsetWidth;
@@ -556,26 +564,27 @@ export class MouseComponent extends Component<IComponentConfiguration> {
 
         let clientRect: ClientRect = element.getBoundingClientRect();
 
-        let canvasX: number = m.clientX - clientRect.left;
-        let canvasY: number = m.clientY - clientRect.top;
+        let canvasX: number = movement.clientX - clientRect.left;
+        let canvasY: number = movement.clientY - clientRect.top;
 
         let direction: THREE.Vector3 =
-            this._viewportCoords.unprojectFromCanvas(canvasX, canvasY, offsetWidth, offsetHeight, r.perspective)
-            .sub(r.perspective.position);
+            this._viewportCoords.unprojectFromCanvas(canvasX, canvasY, offsetWidth, offsetHeight, camera.perspective)
+            .sub(camera.perspective.position);
 
         let directionX: THREE.Vector3 =
-            this._viewportCoords.unprojectFromCanvas(canvasX - m.movementX, canvasY, offsetWidth, offsetHeight, r.perspective)
-            .sub(r.perspective.position);
+            this._viewportCoords.unprojectFromCanvas(canvasX - movement.movementX, canvasY, offsetWidth, offsetHeight, camera.perspective)
+            .sub(camera.perspective.position);
 
         let directionY: THREE.Vector3 =
-            this._viewportCoords.unprojectFromCanvas(canvasX, canvasY - m.movementY, offsetWidth, offsetHeight, r.perspective)
-            .sub(r.perspective.position);
+            this._viewportCoords.unprojectFromCanvas(canvasX, canvasY - movement.movementY, offsetWidth, offsetHeight, camera.perspective)
+            .sub(camera.perspective.position);
 
-        let phi: number = (m.movementX > 0 ? 1 : -1) * directionX.angleTo(direction);
-        let theta: number = (m.movementY > 0 ? -1 : 1) * directionY.angleTo(direction);
+        let phi: number = (movement.movementX > 0 ? 1 : -1) * directionX.angleTo(direction);
+        let theta: number = (movement.movementY > 0 ? -1 : 1) * directionY.angleTo(direction);
 
-        return { phi: phi, theta: theta };
-    }
+        return { phi: phi, theta: theta }
+    };
+
 }
 
 ComponentService.register(MouseComponent);
