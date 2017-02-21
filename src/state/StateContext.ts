@@ -179,4 +179,12 @@ export class StateContext implements IStateContext {
     public zoomIn(delta: number, reference: number[]): void {
         this._state.zoomIn(delta, reference);
     }
+
+    public translate(delta: number[]): void {
+        this._state.translate(delta);
+    }
+
+    public orbitAround(delta: IRotation): void {
+        this._state.orbitAround(delta);
+    }
 }
