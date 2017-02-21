@@ -138,7 +138,9 @@ export class MouseComponent extends Component<IMouseConfiguration> {
                 });
 
         let shiftKeyPressed = Observable
-            .fromEvent(document, "keydown")
+            .merge(
+                Observable.fromEvent(document, "keydown"),
+                Observable.fromEvent(document, "keyup"))
             .map(
                 (event: KeyboardEvent): boolean => {
                     return event.shiftKey;
@@ -164,13 +166,11 @@ export class MouseComponent extends Component<IMouseConfiguration> {
                 })
             .pairwise()
             .withLatestFrom(
-                this._container.renderService.renderCamera$,
-                this._processFlyMovement.bind(this))
+                shiftKeyPressed,
+                this._container.renderService.renderCamera$)
             .subscribe(
-                (rotation: IRotation): void => {
-                    this._navigator.stateService.rotate(rotation);
-                    // this._navigator.stateService.translate(rotation);
-                    // this._navigator.stateService.orbit(rotation);
+                ([events, shiftKey, camera]: [MouseTouchPair, boolean, RenderCamera]): void => {
+                    this._processFlyMovement(events, shiftKey, camera);
                 });
 
         this._container.mouseService.claimMouse(this._name, 0);
@@ -192,7 +192,16 @@ export class MouseComponent extends Component<IMouseConfiguration> {
         return { doubleClickZoom: true, dragPan: true, scrollZoom: true, touchZoom: true };
     }
 
-    private _processFlyMovement(events: MouseTouchPair, r: RenderCamera): IRotation {
+    private _processFlyMovement(events: MouseTouchPair, shiftKey: boolean, camera: RenderCamera): void {
+        console.log('shiftKey', shiftKey);
+        if (shiftKey) {
+            this._navigator.stateService.orbit(this._rotationDeltaFromMovement(events, camera));
+        } else {
+            this._navigator.stateService.rotate(this._rotationDeltaFromMovement(events, camera));
+        }
+    }
+
+    private _rotationDeltaFromMovement(events: MouseTouchPair, r: RenderCamera): IRotation {
         let element: HTMLElement = this._container.element;
 
         let previousEvent: MouseEvent | Touch = events[0];
