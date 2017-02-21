@@ -1,3 +1,4 @@
+import {Observable} from "rxjs/Observable";
 import {Subscription} from "rxjs/Subscription";
 
 import "rxjs/add/observable/merge";
@@ -13,6 +14,7 @@ import {
     DoubleClickZoomHandler,
     DragPanHandler,
     IMouseConfiguration,
+    MouseTouchPair,
     ScrollZoomHandler,
     TouchZoomHandler,
 } from "../../Component";
@@ -20,6 +22,12 @@ import {
     ViewportCoords,
     Spatial,
 } from "../../Geo";
+import {RenderCamera} from "../../Render";
+import {
+    IFrame,
+    IRotation,
+    State,
+} from "../../State";
 import {
     Container,
     Navigator,
@@ -44,6 +52,7 @@ export class MouseComponent extends Component<IMouseConfiguration> {
     private _touchZoomHandler: TouchZoomHandler;
 
     private _configurationSubscription: Subscription;
+    private _orbitMovementSubscription: Subscription;
 
     constructor(name: string, container: Container, navigator: Navigator) {
         super(name, container, navigator);
@@ -128,6 +137,42 @@ export class MouseComponent extends Component<IMouseConfiguration> {
                     }
                 });
 
+        let shiftKeyPressed = Observable
+            .fromEvent(document, "keydown")
+            .map(
+                (event: KeyboardEvent): boolean => {
+                    return event.shiftKey;
+                })
+            .distinctUntilChanged();
+
+        this._orbitMovementSubscription = Observable
+            .merge(
+                this._container.mouseService.filtered$(this._name, this._container.mouseService.mouseDrag$),
+                this._container.touchService.singleTouchDrag$
+                    .map(
+                        (event: TouchEvent): Touch => {
+                            return event.touches[0];
+                        }))
+            .withLatestFrom(this._navigator.stateService.state$)
+            .filter(
+                ([event, state]: [MouseEvent | Touch, State]): boolean => {
+                    return state === State.Orbiting;
+                })
+            .map(
+                ([event, state]: [MouseEvent | Touch, State]): MouseEvent | Touch => {
+                    return event;
+                })
+            .pairwise()
+            .withLatestFrom(
+                this._container.renderService.renderCamera$,
+                this._processOrbitMovement.bind(this))
+            .subscribe(
+                (rotation: IRotation): void => {
+                    this._navigator.stateService.rotate(rotation);
+                    // this._navigator.stateService.translate(rotation);
+                    // this._navigator.stateService.orbitAround(rotation);
+                });
+
         this._container.mouseService.claimMouse(this._name, 0);
     }
 
@@ -145,6 +190,35 @@ export class MouseComponent extends Component<IMouseConfiguration> {
 
     protected _getDefaultConfiguration(): IMouseConfiguration {
         return { doubleClickZoom: true, dragPan: true, scrollZoom: true, touchZoom: true };
+    }
+
+    private _processOrbitMovement(events: MouseTouchPair, r: RenderCamera): IRotation {
+        let element: HTMLElement = this._container.element;
+
+        let previousEvent: MouseEvent | Touch = events[0];
+        let event: MouseEvent | Touch = events[1];
+
+        let movementX: number = event.clientX - previousEvent.clientX;
+        let movementY: number = event.clientY - previousEvent.clientY;
+
+        let [canvasX, canvasY]: number[] = this._viewportCoords.canvasPosition(event, element);
+
+        let direction: THREE.Vector3 =
+            this._viewportCoords.unprojectFromCanvas(canvasX, canvasY, element, r.perspective)
+            .sub(r.perspective.position);
+
+        let directionX: THREE.Vector3 =
+            this._viewportCoords.unprojectFromCanvas(canvasX - movementX, canvasY, element, r.perspective)
+            .sub(r.perspective.position);
+
+        let directionY: THREE.Vector3 =
+            this._viewportCoords.unprojectFromCanvas(canvasX, canvasY - movementY, element, r.perspective)
+            .sub(r.perspective.position);
+
+        let phi: number = (movementX > 0 ? 1 : -1) * directionX.angleTo(direction);
+        let theta: number = (movementY > 0 ? -1 : 1) * directionY.angleTo(direction);
+
+        return { phi: phi, theta: theta };
     }
 }
 
