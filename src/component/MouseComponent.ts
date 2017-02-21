@@ -565,12 +565,21 @@ export class MouseComponent extends Component<IComponentConfiguration> {
             this._navigator.stateService.truck(this._truckDeltaFromMovement(movement, camera));
         } else {
             if (keyEvent.ctrlKey || keyEvent.metaKey) {
-                this._navigator.stateService.orbit(this._rotationDeltaFromMovement(movement, camera));
+                this._navigator.stateService.orbit(this._orbitDeltaFromMovement(movement, camera));
             } else {
                 this._navigator.stateService.rotate(this._rotationDeltaFromMovement(movement, camera));
             }
         }
     }
+
+    protected _orbitDeltaFromMovement(movement: IMovement, camera: RenderCamera): IRotation {
+        let element: HTMLElement = this._container.element;
+        let size: number = Math.max(element.offsetWidth, element.offsetHeight);
+        return {
+            phi: -Math.PI * movement.movementX / size,
+            theta: -Math.PI * movement.movementY / size,
+        };
+    };
 
     protected _rotationDeltaFromMovement(movement: IMovement, camera: RenderCamera): IRotation {
         let element: HTMLElement = this._container.element;
