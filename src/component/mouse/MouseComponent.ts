@@ -15,6 +15,7 @@ import {
     DragPanHandler,
     FlyHandler,
     IMouseConfiguration,
+    MouseTouchPair,
     ScrollZoomHandler,
     TouchZoomHandler,
 } from "../../Component";
@@ -23,7 +24,11 @@ import {
     Spatial,
 } from "../../Geo";
 import {RenderCamera} from "../../Render";
-import {IFrame} from "../../State";
+import {
+    IFrame,
+    IRotation,
+    State,
+} from "../../State";
 import {
     Container,
     Navigator,
@@ -49,6 +54,7 @@ export class MouseComponent extends Component<IMouseConfiguration> {
     private _touchZoomHandler: TouchZoomHandler;
 
     private _configurationSubscription: Subscription;
+    private _orbitMovementSubscription: Subscription;
 
     constructor(name: string, container: Container, navigator: Navigator) {
         super(name, container, navigator);
@@ -153,6 +159,35 @@ export class MouseComponent extends Component<IMouseConfiguration> {
 
     protected _getDefaultConfiguration(): IMouseConfiguration {
         return { doubleClickZoom: true, dragPan: true, scrollZoom: true, touchZoom: true };
+    }
+
+    private _processOrbitMovement(events: MouseTouchPair, r: RenderCamera): IRotation {
+        let element: HTMLElement = this._container.element;
+
+        let previousEvent: MouseEvent | Touch = events[0];
+        let event: MouseEvent | Touch = events[1];
+
+        let movementX: number = event.clientX - previousEvent.clientX;
+        let movementY: number = event.clientY - previousEvent.clientY;
+
+        let [canvasX, canvasY]: number[] = this._viewportCoords.canvasPosition(event, element);
+
+        let direction: THREE.Vector3 =
+            this._viewportCoords.unprojectFromCanvas(canvasX, canvasY, element, r.perspective)
+            .sub(r.perspective.position);
+
+        let directionX: THREE.Vector3 =
+            this._viewportCoords.unprojectFromCanvas(canvasX - movementX, canvasY, element, r.perspective)
+            .sub(r.perspective.position);
+
+        let directionY: THREE.Vector3 =
+            this._viewportCoords.unprojectFromCanvas(canvasX, canvasY - movementY, element, r.perspective)
+            .sub(r.perspective.position);
+
+        let phi: number = (movementX > 0 ? 1 : -1) * directionX.angleTo(direction);
+        let theta: number = (movementY > 0 ? -1 : 1) * directionY.angleTo(direction);
+
+        return { phi: phi, theta: theta };
     }
 }
 
