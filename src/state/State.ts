@@ -1,5 +1,5 @@
 export enum State {
-    Orbiting,
+    Flying,
     Traversing,
     Waiting,
 }

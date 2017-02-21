@@ -7,7 +7,7 @@ import {IGPano} from "../../API";
 import {
     IRotation,
     IState,
-    OrbitingState,
+    FlyingState,
     StateBase,
     WaitingState,
 } from "../../State";
@@ -137,8 +137,8 @@ export class TraversingState extends StateBase {
         this._desiredCenter = null;
     }
 
-    public orbit(): StateBase {
-        return new OrbitingState(this);
+    public fly(): StateBase {
+        return new FlyingState(this);
     }
 
     public traverse(): StateBase {

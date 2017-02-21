@@ -70,7 +70,7 @@ export class MouseComponent extends Component<IComponentConfiguration> {
     private _movementSubscription: Subscription;
     private _mouseWheelSubscription: Subscription;
     private _pinchSubscription: Subscription;
-    private _orbitMovementSubscription: Subscription;
+    private _flyMovementSubscription: Subscription;
 
     constructor(name: string, container: Container, navigator: Navigator) {
         super(name, container, navigator);
@@ -180,7 +180,7 @@ export class MouseComponent extends Component<IComponentConfiguration> {
                 this._navigator.stateService.state$)
             .filter(
                 ([movement, frame, state]: [IMovement, IFrame, State]): boolean => {
-                    return state !== State.Orbiting &&
+                    return state !== State.Flying &&
                            (frame.state.currentNode.fullPano || frame.state.nodesAhead < 1);
                 })
             .map(
@@ -503,7 +503,7 @@ export class MouseComponent extends Component<IComponentConfiguration> {
             .distinctUntilChanged();
 
 
-        this._orbitMovementSubscription = Observable
+        this._flyMovementSubscription = Observable
             .merge(
                 mouseMovement$,
                 touchMovement$)
@@ -511,7 +511,7 @@ export class MouseComponent extends Component<IComponentConfiguration> {
                 this._navigator.stateService.state$)
             .filter(
                 ([movement, state]: [IMovement, State]): boolean => {
-                    return state === State.Orbiting;
+                    return state === State.Flying;
                 })
             .map(
                 ([movement, state]: [IMovement, State]): IMovement => {
@@ -519,7 +519,7 @@ export class MouseComponent extends Component<IComponentConfiguration> {
                 })
             .withLatestFrom(
                 this._container.renderService.renderCamera$,
-                this._processOrbitMovement.bind(this))
+                this._processFlyMovement.bind(this))
             .subscribe(
                 (rotation: IRotation): void => {
                     this._navigator.stateService.rotate(rotation);
@@ -547,7 +547,7 @@ export class MouseComponent extends Component<IComponentConfiguration> {
         return {};
     }
 
-    protected _processOrbitMovement(m: IMovement, r: RenderCamera): IRotation {
+    protected _processFlyMovement(m: IMovement, r: RenderCamera): IRotation {
 
         let element: HTMLElement = this._container.element;
 

@@ -377,8 +377,8 @@ export class StateService {
         return this._appendNode$;
     }
 
-    public orbit(): void {
-        this._invokeContextOperation((context: IStateContext) => { context.orbit(); });
+    public fly(): void {
+        this._invokeContextOperation((context: IStateContext) => { context.fly(); });
     }
 
     public traverse(): void {

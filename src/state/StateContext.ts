@@ -1,7 +1,7 @@
 import {
     IRotation,
     IStateContext,
-    OrbitingState,
+    FlyingState,
     State,
     StateBase,
     TraversingState,
@@ -26,10 +26,11 @@ export class StateContext implements IStateContext {
             trajectory: [],
             zoom: 0,
         });
+        this.fly();
     }
 
-    public orbit(): void {
-        this._state = this._state.orbit();
+    public fly(): void {
+        this._state = this._state.fly();
     }
 
     public traverse(): void {
@@ -45,8 +46,8 @@ export class StateContext implements IStateContext {
             return State.Traversing;
         } else if (this._state instanceof WaitingState) {
             return State.Waiting;
-        } else if (this._state instanceof OrbitingState) {
-            return State.Orbiting;
+        } else if (this._state instanceof FlyingState) {
+            return State.Flying;
         }
 
         throw new Error("Invalid state");
