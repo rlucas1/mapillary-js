@@ -353,7 +353,7 @@ export class SliderComponent extends Component<ISliderConfiguration> {
             .first()
             .subscribe(
                 (stateConfig: [State, ISliderConfiguration]): void => {
-                    if (stateConfig[0] === State.Traversing) {
+                    if (stateConfig[0] !== State.Waiting) {
                         this._navigator.stateService.wait();
 
                         let position: number = stateConfig[1].initialPosition;
@@ -582,7 +582,7 @@ export class SliderComponent extends Component<ISliderConfiguration> {
             .first()
             .subscribe(
                 (state: State): void => {
-                    if (state === State.Waiting) {
+                    if (state !== State.Traversing) {
                         this._navigator.stateService.traverse();
                     }
                 });
