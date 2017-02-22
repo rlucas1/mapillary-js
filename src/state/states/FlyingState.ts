@@ -25,7 +25,7 @@ export class FlyingState extends StateBase {
 
     public rotate(delta: IRotation): void {
         console.log("rotate");
-        this._applyRotation(this._currentCamera, delta);
+        this._applyRotation(this._camera, delta);
     }
 
     public rotateBasic(basicRotation: number[]): void {
@@ -43,25 +43,29 @@ export class FlyingState extends StateBase {
 
     public dolly(delta: number): void {
         console.log("dolly", delta);
-        this._applyDolly(this._currentCamera, delta);
+        this._applyDolly(this._camera, delta);
     }
 
     public truck(delta: number[]): void {
         console.log("truck", delta);
-        this._applyTruck(this._currentCamera, delta);
+        this._applyTruck(this._camera, delta);
     }
 
     public orbit(delta: IRotation): void {
         console.log("orbit", delta);
-        this._applyOribit(this._currentCamera, delta);
+        this._applyOribit(this._camera, delta);
     }
 
-    public update(fps: number): void {
-        this._camera.copy(this._currentCamera);
-    }
+    public update(fps: number): void { /*noop*/ }
 
     protected _getAlpha(): number {
         return 1;
+    }
+
+    protected _setCurrentCamera(): void {
+        super._setCurrentCamera();
+
+        this._camera.copy(this._currentCamera);
     }
 
     private _applyRotation(camera: Camera, rotation: IRotation): void {
