@@ -137,22 +137,21 @@ export class MouseComponent extends Component<IMouseConfiguration> {
                     }
                 });
 
-        this._flyMovementSubscription = Observable
-            .merge(
-                this._container.mouseService.filtered$(this._name, this._container.mouseService.mouseDrag$),
-                this._container.touchService.singleTouchDrag$
-                    .map(
-                        (event: TouchEvent): Touch => {
-                            return event.touches[0];
-                        }))
-            .withLatestFrom(this._navigator.stateService.state$)
-            .filter(
-                ([event, state]: [MouseEvent, State]): boolean => {
+        let flying$: Observable<boolean> = this._navigator.stateService.state$
+            .map(
+                (state: State): boolean => {
                     return state === State.Flying;
                 })
-            .map(
-                ([event, state]: [MouseEvent, State]): MouseEvent | Touch => {
-                    return event;
+            .publishReplay(1)
+            .refCount();
+
+        this._flyMovementSubscription = flying$
+            .switchMap(
+                (flying: boolean): Observable<MouseEvent> => {
+                    return flying ?
+                        this._container.mouseService
+                            .filtered$(this._name, this._container.mouseService.mouseDrag$) :
+                        Observable.empty<MouseEvent>();
                 })
             .pairwise()
             .withLatestFrom(this._container.renderService.renderCamera$)
@@ -161,17 +160,13 @@ export class MouseComponent extends Component<IMouseConfiguration> {
                     this._processFlyMovement(events, camera);
                 });
 
-        this._flyMouseWheelSubscription = this._container.mouseService
-            .filtered$(this._name, this._container.mouseService.mouseWheel$)
-            .withLatestFrom(
-                this._navigator.stateService.state$)
-            .filter(
-                ([event, state]: [WheelEvent, State]): boolean => {
-                    return state === State.Flying;
-                })
-            .map(
-                ([event, state]: [WheelEvent, State]): WheelEvent => {
-                    return event;
+        this._flyMouseWheelSubscription = flying$
+            .switchMap(
+                (flying: boolean): Observable<WheelEvent> => {
+                    return flying ?
+                        this._container.mouseService
+                            .filtered$(this._name, this._container.mouseService.mouseWheel$) :
+                        Observable.empty<WheelEvent>();
                 })
             .subscribe(
                 (event: WheelEvent): void => {
