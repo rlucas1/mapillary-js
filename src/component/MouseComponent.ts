@@ -492,34 +492,23 @@ export class MouseComponent extends Component<IComponentConfiguration> {
                     this._navigator.stateService.rotateBasicUnbounded([basicX, basicY]);
                 });
 
-
-        let keyboardEvent: Observable<KeyboardEvent> = Observable
-            .merge(
-                Observable.fromEvent(document, "keydown"),
-                Observable.fromEvent(document, "keyup"))
-            .distinctUntilChanged();
-
-
-        this._flyMovementSubscription = Observable
-            .merge(
-                mouseMovement$,
-                touchMovement$)
+        this._flyMovementSubscription = this._container.mouseService
+            .filtered$(this._name, this._container.mouseService.mouseDrag$)
             .withLatestFrom(
                 this._navigator.stateService.state$)
             .filter(  /* tslint:disable-next-line:no-unused-variable */
-                ([movement, state]: [IMovement, State]): boolean => {
+                ([event, state]: [MouseEvent, State]): boolean => {
                     return state === State.Flying;
                 })
             .map(  /* tslint:disable-next-line:no-unused-variable */
-                ([movement, state]: [IMovement, State]): IMovement => {
-                    return movement;
+                ([event, state]: [MouseEvent, State]): MouseEvent => {
+                    return event;
                 })
             .withLatestFrom(
-                keyboardEvent,
                 this._container.renderService.renderCamera$)
             .subscribe(
-                ([movement, key, camera]: [IMovement, KeyboardEvent, RenderCamera]): void => {
-                    this._processFlyMovement(movement, key, camera);
+                ([event, camera]: [MouseEvent, RenderCamera]): void => {
+                    this._processFlyMovement(event, camera);
                 });
 
         this._flyMouseWheelSubscription = this._container.mouseService
@@ -560,28 +549,28 @@ export class MouseComponent extends Component<IComponentConfiguration> {
         return {};
     }
 
-    protected _processFlyMovement(movement: IMovement, keyEvent: KeyboardEvent, camera: RenderCamera): void {
-        if (keyEvent.shiftKey) {
-            this._navigator.stateService.truck(this._truckDeltaFromMovement(movement, camera));
+    protected _processFlyMovement(event: MouseEvent, camera: RenderCamera): void {
+        if (event.shiftKey) {
+            this._navigator.stateService.truck(this._truckDeltaFromMovement(event, camera));
         } else {
-            if (keyEvent.ctrlKey || keyEvent.metaKey) {
-                this._navigator.stateService.orbit(this._orbitDeltaFromMovement(movement, camera));
+            if (event.ctrlKey || event.metaKey) {
+                this._navigator.stateService.orbit(this._orbitDeltaFromMovement(event, camera));
             } else {
-                this._navigator.stateService.rotate(this._rotationDeltaFromMovement(movement, camera));
+                this._navigator.stateService.rotate(this._rotationDeltaFromMovement(event, camera));
             }
         }
     }
 
-    protected _orbitDeltaFromMovement(movement: IMovement, camera: RenderCamera): IRotation {
+    protected _orbitDeltaFromMovement(event: MouseEvent, camera: RenderCamera): IRotation {
         let element: HTMLElement = this._container.element;
         let size: number = Math.max(element.offsetWidth, element.offsetHeight);
         return {
-            phi: -Math.PI * movement.movementX / size,
-            theta: -Math.PI * movement.movementY / size,
+            phi: -Math.PI * event.movementX / size,
+            theta: -Math.PI * event.movementY / size,
         };
     };
 
-    protected _rotationDeltaFromMovement(movement: IMovement, camera: RenderCamera): IRotation {
+    protected _rotationDeltaFromMovement(event: MouseEvent, camera: RenderCamera): IRotation {
         let element: HTMLElement = this._container.element;
 
         let offsetWidth: number = element.offsetWidth;
@@ -589,32 +578,32 @@ export class MouseComponent extends Component<IComponentConfiguration> {
 
         let clientRect: ClientRect = element.getBoundingClientRect();
 
-        let canvasX: number = movement.clientX - clientRect.left;
-        let canvasY: number = movement.clientY - clientRect.top;
+        let canvasX: number = event.clientX - clientRect.left;
+        let canvasY: number = event.clientY - clientRect.top;
 
         let direction: THREE.Vector3 =
             this._viewportCoords.unprojectFromCanvas(canvasX, canvasY, offsetWidth, offsetHeight, camera.perspective)
             .sub(camera.perspective.position);
 
         let directionX: THREE.Vector3 =
-            this._viewportCoords.unprojectFromCanvas(canvasX - movement.movementX, canvasY, offsetWidth, offsetHeight, camera.perspective)
+            this._viewportCoords.unprojectFromCanvas(canvasX - event.movementX, canvasY, offsetWidth, offsetHeight, camera.perspective)
             .sub(camera.perspective.position);
 
         let directionY: THREE.Vector3 =
-            this._viewportCoords.unprojectFromCanvas(canvasX, canvasY - movement.movementY, offsetWidth, offsetHeight, camera.perspective)
+            this._viewportCoords.unprojectFromCanvas(canvasX, canvasY - event.movementY, offsetWidth, offsetHeight, camera.perspective)
             .sub(camera.perspective.position);
 
-        let phi: number = (movement.movementX > 0 ? 1 : -1) * directionX.angleTo(direction);
-        let theta: number = (movement.movementY > 0 ? -1 : 1) * directionY.angleTo(direction);
+        let phi: number = (event.movementX > 0 ? 1 : -1) * directionX.angleTo(direction);
+        let theta: number = (event.movementY > 0 ? -1 : 1) * directionY.angleTo(direction);
 
         return { phi: phi, theta: theta };
     };
 
-    protected _truckDeltaFromMovement(movement: IMovement, camera: RenderCamera): number[] {
+    protected _truckDeltaFromMovement(event: MouseEvent, camera: RenderCamera): number[] {
         let element: HTMLElement = this._container.element;
         let size: number = Math.max(element.offsetWidth, element.offsetHeight);
-        return [movement.movementX / size,
-                movement.movementY / size];
+        return [event.movementX / size,
+                event.movementY / size];
     };
 
 }
