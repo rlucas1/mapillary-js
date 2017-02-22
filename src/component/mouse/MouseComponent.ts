@@ -15,7 +15,6 @@ import {
     DragPanHandler,
     FlyHandler,
     IMouseConfiguration,
-    MouseTouchPair,
     ScrollZoomHandler,
     TouchZoomHandler,
 } from "../../Component";
