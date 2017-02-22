@@ -1,12 +1,9 @@
 /// <reference path="../../typings/index.d.ts" />
 
-import * as _ from "underscore";
 import * as THREE from "three";
-import * as rbush from "rbush";
 
 import {Observable} from "rxjs/Observable";
 import {Subscription} from "rxjs/Subscription";
-import {Subject} from "rxjs/Subject";
 
 import "rxjs/add/observable/combineLatest";
 
@@ -18,51 +15,61 @@ import "rxjs/add/operator/scan";
 import "rxjs/add/operator/switchMap";
 
 import {
-    IMarkerConfiguration,
-    IMarkerOptions,
-    ISpatialMarker,
-    Marker,
     ComponentService,
     Component,
-    SimpleMarker,
+    IComponentConfiguration,
 } from "../Component";
 import {IFrame} from "../State";
 import {Container, Navigator} from "../Viewer";
 import {IGLRenderHash, GLRenderStage} from "../Render";
-import {Node} from "../Graph";
-import {GeoCoords, ILatLonAlt} from "../Geo";
+import {
+    GeoCoords,
+    ILatLonAlt,
+    Transform,
+} from "../Geo";
+import {Node, Graph} from "../Graph";
 
 
-export class SpatialDataComponent extends Component<IMarkerConfiguration> {
+
+export class SpatialDataComponent extends Component<IComponentConfiguration> {
     public static componentName: string = "spatialData";
 
     private _disposable: Subscription;
+    private _graphChangeSubscription: Subscription;
 
+    private _geoCoords: GeoCoords = new GeoCoords();
+
+    // scene objects
     private _scene: THREE.Scene;
+    private _grid: THREE.Object3D;
+    private _cameraGroup: THREE.Object3D;
+    private _cameras: { [key: string]: THREE.Object3D } = {};
 
     constructor(name: string, container: Container, navigator: Navigator) {
         super(name, container, navigator);
-        console.log('constructing')
+        console.log("constructing");
     }
 
     protected _activate(): void {
-        console.log('activating')
+        console.log("activating");
         this._setUpScene();
 
-        this._disposable = Observable
-            .combineLatest(
-                [
-                    this._navigator.stateService.currentState$,
+        let nodes$: Observable<Node[]> = this._navigator.graphService.graph$
+            .map(this._nodesFromGraph);
+
+        this._graphChangeSubscription = Observable
+            .combineLatest([
+                    nodes$,
+                    this._navigator.stateService.reference$,
                 ])
-            .distinctUntilChanged(
-                undefined,
-                ([frame]: [IFrame]): number => {
-                    return frame.id;
-                })
-            .map(
-                ([frame]: [IFrame]): IGLRenderHash => {
-                    return this._renderHash(frame);
-                })
+            .subscribe(
+                ([nodes, reference]: [Node[], ILatLonAlt]): void => {
+                    this._updateCameras(nodes, reference);
+                });
+
+
+        this._disposable = this._navigator.stateService.currentState$
+            .map(this._renderHash.bind(this))
             .subscribe(this._container.glRenderer.render$);
     }
 
@@ -70,9 +77,10 @@ export class SpatialDataComponent extends Component<IMarkerConfiguration> {
         // release memory
         this._disposeScene();
         this._disposable.unsubscribe();
+        this._graphChangeSubscription.unsubscribe();
     }
 
-    protected _getDefaultConfiguration(): IMarkerConfiguration {
+    protected _getDefaultConfiguration(): IComponentConfiguration {
         return {};
     }
 
@@ -101,7 +109,6 @@ export class SpatialDataComponent extends Component<IMarkerConfiguration> {
         }
 
         let needRender: boolean = false;
-        let node: Node = frame.state.currentNode;
 
         return needRender;
     }
@@ -115,7 +122,11 @@ export class SpatialDataComponent extends Component<IMarkerConfiguration> {
 
     private _setUpScene(): void {
         this._scene = new THREE.Scene();
-        this._scene.add(this._createGrid());
+        this._grid = this._createGrid();
+        this._scene.add(this._grid);
+
+        this._cameraGroup = new THREE.Object3D;
+        this._scene.add(this._cameraGroup);
     }
 
     private _createGrid(): THREE.Object3D {
@@ -138,6 +149,7 @@ export class SpatialDataComponent extends Component<IMarkerConfiguration> {
         return group;
     }
 
+    /*
     private _disposeObject(object: THREE.Object3D): void {
         this._scene.remove(object);
         for (let i: number = 0; i < object.children.length; ++i) {
@@ -146,8 +158,77 @@ export class SpatialDataComponent extends Component<IMarkerConfiguration> {
             c.material.dispose();
         }
     }
+    */
 
     private _disposeScene(): void {
+        // todo(pau)
+    }
+
+    private _nodesFromGraph(graph: Graph): Node[] {
+        let nodes: Node[] = [];
+        for (let key in graph.nodes) {
+            if (graph.nodes.hasOwnProperty(key)) {
+                let node: Node = graph.nodes[key];
+                if (node.full) {
+                    nodes.push(node);
+                }
+            }
+        }
+        return nodes;
+    }
+
+    private _updateCameras(nodes: Node[], reference: ILatLonAlt): void {
+        for (let node of nodes) {
+            if (!(node.key in this._cameras)) {
+                let center: number[] = this._geoCoords.geodeticToEnu(
+                    node.latLon.lat,
+                    node.latLon.lon,
+                    node.alt,
+                    reference.lat,
+                    reference.lon,
+                    reference.alt);
+                let transform: Transform = new Transform(node, null, center);
+                let geometry: THREE.Geometry = this._cameraGeometry(transform, 1.0);
+                let material: THREE.LineBasicMaterial = new THREE.LineBasicMaterial({color: 0xCCCCCC});
+                let camera: THREE.Line = new THREE.Line(geometry, material, THREE.LinePieces);
+                this._cameras[node.key] = camera;
+                this._cameraGroup.add(camera);
+            }
+        }
+    }
+
+    private _cameraGeometry(transform: Transform, size: number): THREE.Geometry {
+        let width: number = transform.width;
+        let height: number = transform.height;
+        let dx: number = width / 2.0 / Math.max(width, height);
+        let dy: number = height / 2.0 / Math.max(width, height);
+        let origin: number [] = transform.unprojectBasic([0, 0], 0);
+        let topLeft: number[] = transform.unprojectBasic([-dx, -dy], size);
+        let topRight: number[] = transform.unprojectBasic([ dx, -dy], size);
+        let bottomRight: number[] = transform.unprojectBasic([ dx,  dy], size);
+        let bottomLeft: number[] = transform.unprojectBasic([-dx,  dy], size);
+        let geometry: THREE.Geometry = new THREE.Geometry();
+        geometry.vertices.push(this._toV3(origin));
+        geometry.vertices.push(this._toV3(topLeft));
+        geometry.vertices.push(this._toV3(origin));
+        geometry.vertices.push(this._toV3(topRight));
+        geometry.vertices.push(this._toV3(origin));
+        geometry.vertices.push(this._toV3(bottomRight));
+        geometry.vertices.push(this._toV3(origin));
+        geometry.vertices.push(this._toV3(bottomLeft));
+        geometry.vertices.push(this._toV3(topLeft));
+        geometry.vertices.push(this._toV3(topRight));
+        geometry.vertices.push(this._toV3(topRight));
+        geometry.vertices.push(this._toV3(bottomRight));
+        // geometry.vertices.push(this._toV3(bottomRight));
+        // geometry.vertices.push(this._toV3(bottomLeft));
+        geometry.vertices.push(this._toV3(bottomLeft));
+        geometry.vertices.push(this._toV3(topLeft));
+        return geometry;
+    }
+
+    private _toV3(v: number[]): THREE.Vector3 {
+        return new THREE.Vector3(v[0], v[1], v[2]);
     }
 }
 

@@ -247,6 +247,10 @@ export class Graph {
         return this._changed$;
     }
 
+    public get nodes(): { [key: string]: Node } {
+        return this._nodes;
+    }
+
     /**
      * Retrieve and cache node fill properties.
      *
