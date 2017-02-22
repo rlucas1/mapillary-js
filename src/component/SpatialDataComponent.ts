@@ -46,6 +46,7 @@ export class SpatialDataComponent extends Component<IComponentConfiguration> {
     private _grid: THREE.Object3D;
     private _cameraGroup: THREE.Object3D;
     private _cameras: { [key: string]: THREE.Object3D } = {};
+    private _ccColors: { [cc: string]: string } = {};
 
     constructor(name: string, container: Container, navigator: Navigator) {
         super(name, container, navigator);
@@ -200,7 +201,14 @@ export class SpatialDataComponent extends Component<IComponentConfiguration> {
                 let translation: number[] = this._nodeToTranslation(node, reference);
                 let transform: Transform = new Transform(node, null, translation);
                 let geometry: THREE.Geometry = this._cameraGeometry(transform, 1.0);
-                let material: THREE.LineBasicMaterial = new THREE.LineBasicMaterial({color: 0xCCCCCC});
+                let color: string;
+                if (node.mergeCC in this._ccColors) {
+                    color = this._ccColors[node.mergeCC];
+                } else {
+                    color = this._randomColor();
+                    this._ccColors[node.mergeCC] = color;
+                }
+                let material: THREE.LineBasicMaterial = new THREE.LineBasicMaterial({color: color});
                 let camera: THREE.LineSegments = new THREE.LineSegments(geometry, material);
                 this._cameras[node.key] = camera;
                 this._cameraGroup.add(camera);
@@ -208,16 +216,21 @@ export class SpatialDataComponent extends Component<IComponentConfiguration> {
         }
     }
 
+    private _randomColor(): string {
+        let letters: string = "0123456789ABCDEF";
+        let color: string = "#";
+        for (let i: number = 0; i < 6; i++ ) {
+            color += letters[Math.floor(Math.random() * 16)];
+        }
+        return color;
+    }
+
     private _cameraGeometry(transform: Transform, size: number): THREE.Geometry {
-        let width: number = transform.width;
-        let height: number = transform.height;
-        let dx: number = width / 2.0 / Math.max(width, height);
-        let dy: number = height / 2.0 / Math.max(width, height);
         let origin: number [] = transform.unprojectBasic([0, 0], 0);
-        let topLeft: number[] = transform.unprojectBasic([-dx, -dy], size);
-        let topRight: number[] = transform.unprojectBasic([ dx, -dy], size);
-        let bottomRight: number[] = transform.unprojectBasic([ dx,  dy], size);
-        let bottomLeft: number[] = transform.unprojectBasic([-dx,  dy], size);
+        let topLeft: number[] = transform.unprojectBasic([0, 0], size);
+        let topRight: number[] = transform.unprojectBasic([1, 0], size);
+        let bottomRight: number[] = transform.unprojectBasic([1, 1], size);
+        let bottomLeft: number[] = transform.unprojectBasic([0, 1], size);
         let geometry: THREE.Geometry = new THREE.Geometry();
         geometry.vertices.push(this._toV3(origin));
         geometry.vertices.push(this._toV3(topLeft));
