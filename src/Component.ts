@@ -46,6 +46,7 @@ export {SimpleMarker} from "./component/marker/marker/SimpleMarker";
 export {CircleMarker} from "./component/marker/marker/CircleMarker";
 export {SliderComponent} from "./component/imageplane/SliderComponent";
 export {StatsComponent} from "./component/StatsComponent";
+export {SpatialDataComponent} from "./component/SpatialDataComponent";
 export {Tag} from "./component/tag/tag/Tag";
 export {OutlineTag} from "./component/tag/tag/OutlineTag";
 export {RenderTag} from "./component/tag/tag/RenderTag";
