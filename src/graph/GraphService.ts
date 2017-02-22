@@ -61,6 +61,10 @@ export class GraphService {
         this._spatialSubscriptions = [];
     }
 
+    public get graph$(): Observable<Graph> {
+        return this._graph$;
+    }
+
     /**
      * Cache a node in the graph and retrieve it.
      *
