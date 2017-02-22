@@ -492,17 +492,21 @@ export class MouseComponent extends Component<IComponentConfiguration> {
                     this._navigator.stateService.rotateBasicUnbounded([basicX, basicY]);
                 });
 
-        this._flyMovementSubscription = this._container.mouseService
-            .filtered$(this._name, this._container.mouseService.mouseDrag$)
-            .withLatestFrom(
-                this._navigator.stateService.state$)
-            .filter(  /* tslint:disable-next-line:no-unused-variable */
-                ([event, state]: [MouseEvent, State]): boolean => {
+        let flying$: Observable<boolean> = this._navigator.stateService.state$
+            .map(
+                (state: State): boolean => {
                     return state === State.Flying;
                 })
-            .map(  /* tslint:disable-next-line:no-unused-variable */
-                ([event, state]: [MouseEvent, State]): MouseEvent => {
-                    return event;
+            .publishReplay(1)
+            .refCount();
+
+        this._flyMovementSubscription = flying$
+            .switchMap(
+                (flying: boolean): Observable<MouseEvent> => {
+                    return flying ?
+                        this._container.mouseService
+                            .filtered$(this._name, this._container.mouseService.mouseDrag$) :
+                        Observable.empty<MouseEvent>();
                 })
             .withLatestFrom(
                 this._container.renderService.renderCamera$)
@@ -511,17 +515,13 @@ export class MouseComponent extends Component<IComponentConfiguration> {
                     this._processFlyMovement(event, camera);
                 });
 
-        this._flyMouseWheelSubscription = this._container.mouseService
-            .filtered$(this._name, this._container.mouseService.mouseWheel$)
-            .withLatestFrom(
-                this._navigator.stateService.state$)
-            .filter(  /* tslint:disable-next-line:no-unused-variable */
-                ([event, state]: [WheelEvent, State]): boolean => {
-                    return state === State.Flying;
-                })
-            .map(  /* tslint:disable-next-line:no-unused-variable */
-                ([event, state]: [WheelEvent, State]): IMovement => {
-                    return event;
+        this._flyMouseWheelSubscription = flying$
+            .switchMap(
+                (flying: boolean): Observable<WheelEvent> => {
+                    return flying ?
+                        this._container.mouseService
+                            .filtered$(this._name, this._container.mouseService.mouseWheel$) :
+                        Observable.empty<MouseEvent>();
                 })
             .subscribe(
                 (event: WheelEvent): void => {
