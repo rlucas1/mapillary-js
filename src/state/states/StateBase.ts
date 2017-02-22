@@ -125,33 +125,43 @@ export abstract class StateBase implements IState {
         return this._motionless;
     }
 
-    public abstract fly(): StateBase;
-
-    public abstract traverse(): StateBase;
-
-    public abstract wait(): StateBase;
-
-    public abstract move(delta: number): void;
-
-    public abstract moveTo(position: number): void;
-
-    public abstract rotate(delta: IRotation): void;
-
-    public abstract rotateBasic(basicRotation: number[]): void;
-
-    public abstract rotateBasicUnbounded(basicRotation: number[]): void;
-
-    public abstract rotateToBasic(basic: number[]): void;
-
-    public abstract zoomIn(delta: number, reference: number[]): void;
-
-    public dolly(delta: number): void {/*noop*/}
-
-    public truck(delta: number[]): void {/*noop*/}
-
-    public orbit(delta: IRotation): void {/*noop*/}
-
     public abstract update(fps: number): void;
+
+    public fly(): StateBase {
+        throw new Error("Not implemented");
+    }
+
+    public wait(): StateBase {
+        throw new Error("Not implemented");
+    }
+
+    public traverse(): StateBase {
+        throw new Error("Not implemented");
+    }
+
+    public move(delta: number): void { /*noop*/ }
+
+    public moveTo(position: number): void { /*noop*/ }
+
+    public rotate(delta: IRotation): void { /*noop*/ }
+
+    public rotateBasic(basicRotation: number[]): void { /*noop*/ }
+
+    public rotateBasicUnbounded(basicRotation: number[]): void { /*noop*/ }
+
+    public rotateToBasic(basic: number[]): void { /*noop*/ }
+
+    public zoomIn(delta: number, reference: number[]): void { /*noop*/ }
+
+    public dolly(delta: number): void { /*noop*/ }
+
+    public truck(delta: number[]): void { /*noop*/ }
+
+    public orbit(delta: IRotation): void { /*noop*/ }
+
+    public setCenter(center: number[]): void  { /*noop*/ }
+
+    public setZoom(zoom: number): void { /*noop*/ }
 
     public append(nodes: Node[]): void {
         if (nodes.length < 1) {
@@ -240,10 +250,6 @@ export abstract class StateBase implements IState {
             this.currentTransform.projectBasic(this._camera.lookat.toArray()) :
             [0.5, 0.5];
     }
-
-    public abstract setCenter(center: number[]): void;
-
-    public abstract setZoom(zoom: number): void;
 
     protected abstract _getAlpha(): number;
 
