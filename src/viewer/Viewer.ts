@@ -451,4 +451,12 @@ export class Viewer extends EventEmitter {
     public setZoom(zoom: number): void {
         this._navigator.stateService.setZoom(zoom);
     }
+
+    public fly(): void {
+        this._navigator.stateService.fly();
+    }
+
+    public walk(): void {
+        this._navigator.stateService.traverse();
+    }
 }

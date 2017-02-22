@@ -46,12 +46,6 @@ export class FlyingState extends StateBase {
         return 1;
     }
 
-    protected _setCurrentCamera(): void {
-        super._setCurrentCamera();
-
-        this._camera.copy(this._currentCamera);
-    }
-
     private _applyRotation(camera: Camera, rotation: IRotation): void {
         if (camera == null) {
             return;
