@@ -21,6 +21,7 @@
     <button onclick="playRoute()">Play Route</button><button onclick="stopRoute()">Stop Route</button>
     <button onclick="letterbox()">Letterbox</button><button onclick="fill()">Fill</button>
     <button onclick="setFilter()">Filter</button>
+    <button onclick="fly()">Fly</button><button onclick="walk()">Walk</button>
     <script src='dist/mapillary.js'></script>
     <script>
         var viewer = new Mapillary.Viewer(
@@ -65,6 +66,14 @@
                 function(n) {
                     console.log("filter", filters[filterIndex]);
                 });
+        }
+
+        function fly() {
+            viewer.fly();
+        }
+
+        function walk() {
+            viewer.walk();
         }
 
         var sequenceComponent = viewer.getComponent("sequence");

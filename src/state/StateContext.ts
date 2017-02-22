@@ -26,7 +26,6 @@ export class StateContext implements IStateContext {
             trajectory: [],
             zoom: 0,
         });
-        this.fly();
     }
 
     public fly(): void {
