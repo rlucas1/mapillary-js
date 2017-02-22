@@ -144,7 +144,7 @@ export class SpatialDataComponent extends Component<IComponentConfiguration> {
             );
         }
         let lineMaterial: THREE.LineBasicMaterial = new THREE.LineBasicMaterial({color: 0x555555});
-        let line: THREE.Line = new THREE.Line(linegeo, lineMaterial, THREE.LinePieces);
+        let line: THREE.LineSegments = new THREE.LineSegments(linegeo, lineMaterial);
 
         let group: THREE.Object3D = new THREE.Object3D();
         group.add(line);
@@ -201,7 +201,7 @@ export class SpatialDataComponent extends Component<IComponentConfiguration> {
                 let transform: Transform = new Transform(node, null, translation);
                 let geometry: THREE.Geometry = this._cameraGeometry(transform, 1.0);
                 let material: THREE.LineBasicMaterial = new THREE.LineBasicMaterial({color: 0xCCCCCC});
-                let camera: THREE.Line = new THREE.Line(geometry, material, THREE.LinePieces);
+                let camera: THREE.LineSegments = new THREE.LineSegments(geometry, material);
                 this._cameras[node.key] = camera;
                 this._cameraGroup.add(camera);
             }
