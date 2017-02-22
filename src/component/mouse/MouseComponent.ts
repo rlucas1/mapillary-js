@@ -14,7 +14,6 @@ import {
     DoubleClickZoomHandler,
     DragPanHandler,
     IMouseConfiguration,
-    MouseTouchPair,
     ScrollZoomHandler,
     TouchZoomHandler,
 } from "../../Component";
@@ -138,12 +137,6 @@ export class MouseComponent extends Component<IMouseConfiguration> {
                     }
                 });
 
-        let keyboardEvent: Observable<KeyboardEvent> = Observable
-            .merge(
-                Observable.fromEvent<KeyboardEvent>(document, "keydown"),
-                Observable.fromEvent<KeyboardEvent>(document, "keyup"))
-            .distinctUntilChanged();
-
         this._flyMovementSubscription = Observable
             .merge(
                 this._container.mouseService.filtered$(this._name, this._container.mouseService.mouseDrag$),
@@ -154,20 +147,18 @@ export class MouseComponent extends Component<IMouseConfiguration> {
                         }))
             .withLatestFrom(this._navigator.stateService.state$)
             .filter(
-                ([event, state]: [MouseEvent | Touch, State]): boolean => {
+                ([event, state]: [MouseEvent, State]): boolean => {
                     return state === State.Flying;
                 })
             .map(
-                ([event, state]: [MouseEvent | Touch, State]): MouseEvent | Touch => {
+                ([event, state]: [MouseEvent, State]): MouseEvent | Touch => {
                     return event;
                 })
             .pairwise()
-            .withLatestFrom(
-                keyboardEvent,
-                this._container.renderService.renderCamera$)
+            .withLatestFrom(this._container.renderService.renderCamera$)
             .subscribe(
-                ([events, key, camera]: [MouseTouchPair, KeyboardEvent, RenderCamera]): void => {
-                    this._processFlyMovement(events, key, camera);
+                ([events, camera]: [[MouseEvent, MouseEvent], RenderCamera]): void => {
+                    this._processFlyMovement(events, camera);
                 });
 
         this._flyMouseWheelSubscription = this._container.mouseService
@@ -208,12 +199,12 @@ export class MouseComponent extends Component<IMouseConfiguration> {
         return { doubleClickZoom: true, dragPan: true, scrollZoom: true, touchZoom: true };
     }
 
-    protected _orbitDeltaFromMovement(events: MouseTouchPair, camera: RenderCamera): IRotation {
+    protected _orbitDeltaFromMovement(events: [MouseEvent, MouseEvent], camera: RenderCamera): IRotation {
         let element: HTMLElement = this._container.element;
         let size: number = Math.max(element.offsetWidth, element.offsetHeight);
 
-        let previousEvent: MouseEvent | Touch = events[0];
-        let event: MouseEvent | Touch = events[1];
+        let previousEvent: MouseEvent = events[0];
+        let event: MouseEvent = events[1];
 
         let movementX: number = event.clientX - previousEvent.clientX;
         let movementY: number = event.clientY - previousEvent.clientY;
@@ -224,11 +215,12 @@ export class MouseComponent extends Component<IMouseConfiguration> {
         };
     };
 
-    protected _processFlyMovement(events: MouseTouchPair, keyEvent: KeyboardEvent, camera: RenderCamera): void {
-        if (keyEvent.shiftKey) {
+    protected _processFlyMovement(events: [MouseEvent, MouseEvent], camera: RenderCamera): void {
+        const event: MouseEvent = events[1];
+        if (event.shiftKey) {
             this._navigator.stateService.truck(this._truckDeltaFromMovement(events, camera));
         } else {
-            if (keyEvent.ctrlKey || keyEvent.metaKey) {
+            if (event.ctrlKey || event.metaKey) {
                 this._navigator.stateService.orbit(this._rotationDeltaFromMovement(events, camera));
             } else {
                 this._navigator.stateService.rotate(this._rotationDeltaFromMovement(events, camera));
@@ -236,7 +228,7 @@ export class MouseComponent extends Component<IMouseConfiguration> {
         }
     }
 
-    private _rotationDeltaFromMovement(events: MouseTouchPair, r: RenderCamera): IRotation {
+    private _rotationDeltaFromMovement(events: [MouseEvent, MouseEvent], r: RenderCamera): IRotation {
         let element: HTMLElement = this._container.element;
 
         let previousEvent: MouseEvent | Touch = events[0];
@@ -265,7 +257,7 @@ export class MouseComponent extends Component<IMouseConfiguration> {
         return { phi: phi, theta: theta };
     }
 
-    protected _truckDeltaFromMovement(events: MouseTouchPair, camera: RenderCamera): number[] {
+    protected _truckDeltaFromMovement(events: [MouseEvent, MouseEvent], camera: RenderCamera): number[] {
         let element: HTMLElement = this._container.element;
         let size: number = Math.max(element.offsetWidth, element.offsetHeight);
 
