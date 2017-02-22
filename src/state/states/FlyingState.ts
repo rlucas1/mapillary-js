@@ -10,6 +10,7 @@ import {
     Camera,
 } from "../../Geo";
 
+
 export class FlyingState extends StateBase {
     constructor(state: IState) {
         super(state);
@@ -26,12 +27,6 @@ export class FlyingState extends StateBase {
     public rotate(delta: IRotation): void {
         this._applyRotation(this._camera, delta);
     }
-
-    public rotateBasic(basicRotation: number[]): void { /*nops*/ }
-
-    public rotateBasicUnbounded(basicRotation: number[]): void { /*nops*/ }
-
-    public rotateToBasic(basic: number[]): void { /*nops*/ }
 
     public dolly(delta: number): void {
         this._applyDolly(this._camera, delta);
