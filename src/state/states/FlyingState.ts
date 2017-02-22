@@ -24,35 +24,24 @@ export class FlyingState extends StateBase {
     }
 
     public rotate(delta: IRotation): void {
-        console.log("rotate");
         this._applyRotation(this._camera, delta);
     }
 
-    public rotateBasic(basicRotation: number[]): void {
-        console.log("rotateBasic");
-        throw new Error("Not implemented");
-    }
+    public rotateBasic(basicRotation: number[]): void { /*nops*/ }
 
-    public rotateBasicUnbounded(basicRotation: number[]): void {
-        console.log("rotateBasicUnbounded");
-    }
+    public rotateBasicUnbounded(basicRotation: number[]): void { /*nops*/ }
 
-    public rotateToBasic(basic: number[]): void {
-        console.log("rotateToBasic");
-    }
+    public rotateToBasic(basic: number[]): void { /*nops*/ }
 
     public dolly(delta: number): void {
-        console.log("dolly", delta);
         this._applyDolly(this._camera, delta);
     }
 
     public truck(delta: number[]): void {
-        console.log("truck", delta);
         this._applyTruck(this._camera, delta);
     }
 
     public orbit(delta: IRotation): void {
-        console.log("orbit", delta);
         this._applyOribit(this._camera, delta);
     }
 
