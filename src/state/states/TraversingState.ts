@@ -141,10 +141,6 @@ export class TraversingState extends StateBase {
         return new FlyingState(this);
     }
 
-    public traverse(): StateBase {
-        throw new Error("Not implemented");
-    }
-
     public wait(): StateBase {
         return new WaitingState(this);
     }
@@ -193,14 +189,6 @@ export class TraversingState extends StateBase {
         if (this._trajectory.length < 3) {
             this._useBezier = true;
         }
-    }
-
-    public move(delta: number): void {
-        throw new Error("Not implemented");
-    }
-
-    public moveTo(delta: number): void {
-        throw new Error("Not implemented");
     }
 
     public rotate(rotationDelta: IRotation): void {

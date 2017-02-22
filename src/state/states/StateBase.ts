@@ -125,25 +125,33 @@ export abstract class StateBase implements IState {
         return this._motionless;
     }
 
-    public abstract fly(): StateBase;
+    public abstract update(fps: number): void;
 
-    public abstract traverse(): StateBase;
+    public fly(): StateBase {
+        throw new Error("Not implemented");
+    }
 
-    public abstract wait(): StateBase;
+    public traverse(): StateBase {
+        throw new Error("Not implemented");
+    }
 
-    public abstract move(delta: number): void;
+    public wait(): StateBase {
+        throw new Error("Not implemented");
+    }
 
-    public abstract moveTo(position: number): void;
+    public move(delta: number): void {/*noop*/}
 
-    public abstract rotate(delta: IRotation): void;
+    public moveTo(position: number): void {/*noop*/}
 
-    public abstract rotateBasic(basicRotation: number[]): void;
+    public rotate(delta: IRotation): void {/*noop*/}
 
-    public abstract rotateBasicUnbounded(basicRotation: number[]): void;
+    public rotateBasic(basicRotation: number[]): void {/*noop*/}
 
-    public abstract rotateToBasic(basic: number[]): void;
+    public rotateBasicUnbounded(basicRotation: number[]): void {/*noop*/}
 
-    public abstract zoomIn(delta: number, reference: number[]): void;
+    public rotateToBasic(basic: number[]): void {/*noop*/}
+
+    public zoomIn(delta: number, reference: number[]): void {/*noop*/}
 
     public dolly(delta: number): void {/*noop*/}
 
@@ -151,7 +159,9 @@ export abstract class StateBase implements IState {
 
     public orbit(delta: IRotation): void {/*noop*/}
 
-    public abstract update(fps: number): void;
+    public setCenter(center: number[]): void {/*noop*/}
+
+    public setZoom(zoom: number): void {/*noop*/}
 
     public append(nodes: Node[]): void {
         if (nodes.length < 1) {
@@ -240,10 +250,6 @@ export abstract class StateBase implements IState {
             this.currentTransform.projectBasic(this._camera.lookat.toArray()) :
             [0.5, 0.5];
     }
-
-    public abstract setCenter(center: number[]): void;
-
-    public abstract setZoom(zoom: number): void;
 
     protected abstract _getAlpha(): number;
 

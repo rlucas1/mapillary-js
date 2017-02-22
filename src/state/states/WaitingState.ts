@@ -26,10 +26,6 @@ export class WaitingState extends StateBase {
         return new TraversingState(this);
     }
 
-    public wait(): StateBase {
-        throw new Error("Not implemented");
-    }
-
     public prepend(nodes: Node[]): void {
         super.prepend(nodes);
 
@@ -42,16 +38,6 @@ export class WaitingState extends StateBase {
         this._motionless = this._motionlessTransition();
     }
 
-    public rotate(delta: IRotation): void { return; }
-
-    public rotateBasic(basicRotation: number[]): void { return; }
-
-    public rotateBasicUnbounded(basicRotation: number[]): void { return; }
-
-    public rotateToBasic(basic: number[]): void { return; }
-
-    public zoomIn(delta: number, reference: number[]): void { return; }
-
     public move(delta: number): void {
         this._alpha = Math.max(0, Math.min(1, this._alpha + delta));
     }
@@ -63,10 +49,6 @@ export class WaitingState extends StateBase {
     public update(fps: number): void {
         this._camera.lerpCameras(this._previousCamera, this._currentCamera, this.alpha);
     }
-
-    public setCenter(center: number[]): void { return; }
-
-    public setZoom(zoom: number): void { return; }
 
     protected _getAlpha(): number {
         return this._motionless ? Math.round(this._alpha) : this._alpha;

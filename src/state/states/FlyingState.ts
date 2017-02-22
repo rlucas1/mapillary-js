@@ -15,24 +15,12 @@ export class FlyingState extends StateBase {
         super(state);
     }
 
-    public fly(): StateBase {
-        throw new Error("Not implemented");
-    }
-
     public traverse(): StateBase {
         return new TraversingState(this);
     }
 
     public wait(): StateBase {
         return new WaitingState(this);
-    }
-
-    public move(delta: number): void {
-        throw new Error("Not implemented");
-    }
-
-    public moveTo(position: number): void {
-        throw new Error("Not implemented");
     }
 
     public rotate(delta: IRotation): void {
@@ -53,8 +41,6 @@ export class FlyingState extends StateBase {
         console.log("rotateToBasic");
     }
 
-    public zoomIn(delta: number, reference: number[]): void { /*noop*/ }
-
     public dolly(delta: number): void {
         console.log("dolly", delta);
         this._applyDolly(this._currentCamera, delta);
@@ -72,11 +58,7 @@ export class FlyingState extends StateBase {
 
     public update(fps: number): void {
         this._camera.copy(this._currentCamera);
-     }
-
-    public setCenter(center: number[]): void { /*noop*/ }
-
-    public setZoom(zoom: number): void { /*noop*/ }
+    }
 
     protected _getAlpha(): number {
         return 1;

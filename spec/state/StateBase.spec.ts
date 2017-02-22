@@ -6,22 +6,10 @@ import {NodeHelper} from "../helper/NodeHelper.spec";
 import {ICoreNode} from "../../src/API";
 import {Camera} from "../../src/Geo";
 import {Node} from "../../src/Graph";
-import {IRotation, IState, StateBase} from "../../src/State";
+import {IState, StateBase} from "../../src/State";
 
 class TestStateBase extends StateBase {
-    public orbit(): StateBase { return null; }
-    public traverse(): StateBase { return null; }
-    public wait(): StateBase { return null; }
-    public move(delta: number): void { return; }
-    public moveTo(position: number): void { return; }
-    public rotate(delta: IRotation): void { return; }
-    public rotateBasic(basicRotation: number[]): void { return; }
-    public rotateBasicUnbounded(basic: number[]): void { return; }
-    public rotateToBasic(basic: number[]): void { return; }
-    public zoomIn(delta: number, reference: number[]): void { return; }
-    public update(fps: number): void { return; }
-    public setCenter(center: number[]): void { return; }
-    public setZoom(zoom: number): void { return; }
+    public update(fps: number): void { /*noop*/ }
 
     protected _getAlpha(): number { return; }
 }
