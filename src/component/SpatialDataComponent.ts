@@ -25,6 +25,7 @@ import {IGLRenderHash, GLRenderStage} from "../Render";
 import {
     GeoCoords,
     ILatLonAlt,
+    Spatial,
     Transform,
 } from "../Geo";
 import {Node, Graph} from "../Graph";
@@ -37,6 +38,7 @@ export class SpatialDataComponent extends Component<IComponentConfiguration> {
     private _disposable: Subscription;
     private _graphChangeSubscription: Subscription;
 
+    private _spatial: Spatial = new Spatial();
     private _geoCoords: GeoCoords = new GeoCoords();
 
     // scene objects
@@ -177,17 +179,26 @@ export class SpatialDataComponent extends Component<IComponentConfiguration> {
         return nodes;
     }
 
+    // duplicated with StateBase._nodeToTranslation()
+    private _nodeToTranslation(node: Node, reference: ILatLonAlt): number[] {
+        let C: number[] = this._geoCoords.geodeticToEnu(
+            node.latLon.lat,
+            node.latLon.lon,
+            node.alt,
+            reference.lat,
+            reference.lon,
+            reference.alt);
+
+        let RC: THREE.Vector3 = this._spatial.rotate(C, node.rotation);
+
+        return [-RC.x, -RC.y, -RC.z];
+    }
+
     private _updateCameras(nodes: Node[], reference: ILatLonAlt): void {
         for (let node of nodes) {
             if (!(node.key in this._cameras)) {
-                let center: number[] = this._geoCoords.geodeticToEnu(
-                    node.latLon.lat,
-                    node.latLon.lon,
-                    node.alt,
-                    reference.lat,
-                    reference.lon,
-                    reference.alt);
-                let transform: Transform = new Transform(node, null, center);
+                let translation: number[] = this._nodeToTranslation(node, reference);
+                let transform: Transform = new Transform(node, null, translation);
                 let geometry: THREE.Geometry = this._cameraGeometry(transform, 1.0);
                 let material: THREE.LineBasicMaterial = new THREE.LineBasicMaterial({color: 0xCCCCCC});
                 let camera: THREE.Line = new THREE.Line(geometry, material, THREE.LinePieces);
