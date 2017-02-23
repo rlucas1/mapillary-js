@@ -29,15 +29,21 @@ export class StateContext implements IStateContext {
     }
 
     public fly(): void {
-        this._state = this._state.fly();
+        if (this.state !== State.Flying) {
+            this._state = this._state.fly();
+        }
     }
 
     public traverse(): void {
-        this._state = this._state.traverse();
+        if (this.state !== State.Traversing) {
+            this._state = this._state.traverse();
+        }
     }
 
     public wait(): void {
-        this._state = this._state.wait();
+        if (this.state !== State.Waiting) {
+            this._state = this._state.wait();
+        }
     }
 
     public get state(): State {
