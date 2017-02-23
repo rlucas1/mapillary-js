@@ -31,12 +31,18 @@ import {
 import {Node, Graph} from "../Graph";
 
 
+interface IDisposable {
+    geometry?: THREE.Geometry;
+    material?: THREE.Material;
+}
+
 
 export class SpatialDataComponent extends Component<IComponentConfiguration> {
     public static componentName: string = "spatialData";
 
-    private _disposable: Subscription;
+    private _renderSubscription: Subscription;
     private _graphChangeSubscription: Subscription;
+    private _resetSubscription: Subscription;
 
     private _spatial: Spatial = new Spatial();
     private _geoCoords: GeoCoords = new GeoCoords();
@@ -60,6 +66,11 @@ export class SpatialDataComponent extends Component<IComponentConfiguration> {
         let nodes$: Observable<Node[]> = this._navigator.graphService.graph$
             .map(this._nodesFromGraph);
 
+        this._resetSubscription = this._navigator.stateService.reference$
+            .subscribe((reference: ILatLonAlt) => {
+                this._resetScene();
+            });
+
         this._graphChangeSubscription = Observable
             .combineLatest([
                     nodes$,
@@ -71,7 +82,7 @@ export class SpatialDataComponent extends Component<IComponentConfiguration> {
                 });
 
 
-        this._disposable = this._navigator.stateService.currentState$
+        this._renderSubscription = this._navigator.stateService.currentState$
             .map(this._renderHash.bind(this))
             .subscribe(this._container.glRenderer.render$);
     }
@@ -79,8 +90,9 @@ export class SpatialDataComponent extends Component<IComponentConfiguration> {
     protected _deactivate(): void {
         // release memory
         this._disposeScene();
-        this._disposable.unsubscribe();
+        this._renderSubscription.unsubscribe();
         this._graphChangeSubscription.unsubscribe();
+        this._resetSubscription.unsubscribe();
     }
 
     protected _getDefaultConfiguration(): IComponentConfiguration {
@@ -132,39 +144,57 @@ export class SpatialDataComponent extends Component<IComponentConfiguration> {
         this._scene.add(this._cameraGroup);
     }
 
+    private _resetScene(): void {
+        this._disposeScene();
+        this._setUpScene();
+    }
+
     private _createGrid(): THREE.Object3D {
-        let linegeo: THREE.Geometry = new THREE.Geometry();
+        let geometry: THREE.Geometry = new THREE.Geometry();
         let N: number = 20;
         let scale: number = 2;
         for (let i: number = 0; i <= 2 * N; ++i) {
-            linegeo.vertices.push(
+            geometry.vertices.push(
                 new THREE.Vector3(scale * (i - N), scale * (-N), 0),
                 new THREE.Vector3(scale * (i - N), scale * ( N), 0),
                 new THREE.Vector3(scale * (-N), scale * (i - N), 0),
                 new THREE.Vector3(scale * ( N), scale * (i - N), 0)
             );
         }
-        let lineMaterial: THREE.LineBasicMaterial = new THREE.LineBasicMaterial({color: 0x555555});
-        let line: THREE.LineSegments = new THREE.LineSegments(linegeo, lineMaterial);
+        let material: THREE.LineBasicMaterial = new THREE.LineBasicMaterial({color: 0x555555});
+        let line: THREE.LineSegments = new THREE.LineSegments(geometry, material);
 
         let group: THREE.Object3D = new THREE.Object3D();
         group.add(line);
         return group;
     }
 
-    /*
     private _disposeObject(object: THREE.Object3D): void {
-        this._scene.remove(object);
-        for (let i: number = 0; i < object.children.length; ++i) {
-            let c: THREE.Mesh = <THREE.Mesh> object.children[i];
-            c.geometry.dispose();
-            c.material.dispose();
+        if (object !== null) {
+            for (let i: number = 0; i < object.children.length; i++) {
+                this._disposeObject(object.children[i]);
+            }
+            let disposable: IDisposable = object as IDisposable;
+            if (disposable.geometry) {
+                disposable.geometry.dispose();
+                disposable.geometry = undefined;
+            }
+            if (disposable.material) {
+                disposable.material.dispose();
+                disposable.material = undefined;
+            }
         }
     }
-    */
 
     private _disposeScene(): void {
-        // todo(pau)
+        this._scene.remove(this._grid);
+        this._disposeObject(this._grid);
+
+        this._scene.remove(this._cameraGroup);
+        this._disposeObject(this._cameraGroup);
+        this._cameras = {};
+
+        this._scene = undefined;
     }
 
     private _nodesFromGraph(graph: Graph): Node[] {
