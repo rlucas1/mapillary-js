@@ -46,6 +46,7 @@ class Scene {
     private _cameraGroup: THREE.Object3D;
     private _cameras: { [key: string]: THREE.Object3D } = {};
     private _ccColors: { [cc: string]: string } = {};
+    private _gpsGroup: THREE.Object3D;
 
     public get threejsScene(): THREE.Scene { return this._scene; }
 
@@ -56,11 +57,9 @@ class Scene {
 
         this._cameraGroup = new THREE.Object3D;
         this._scene.add(this._cameraGroup);
-    }
 
-    public reset(): void {
-        this.dispose();
-        this.setup();
+        this._gpsGroup = new THREE.Object3D;
+        this._scene.add(this._gpsGroup);
     }
 
     public dispose(): void {
@@ -71,7 +70,15 @@ class Scene {
         this._disposeObject(this._cameraGroup);
         this._cameras = {};
 
+        this._scene.remove(this._gpsGroup);
+        this._disposeObject(this._gpsGroup);
+
         this._scene = undefined;
+    }
+
+    public reset(): void {
+        this.dispose();
+        this.setup();
     }
 
     public updateCameras(nodes: Node[], reference: ILatLonAlt): void {
@@ -80,19 +87,41 @@ class Scene {
                 let translation: number[] = this._nodeToTranslation(node, reference);
                 let transform: Transform = new Transform(node, null, translation);
                 let geometry: THREE.Geometry = this._cameraGeometry(transform, 1.0);
-                let color: string;
-                if (node.mergeCC in this._ccColors) {
-                    color = this._ccColors[node.mergeCC];
-                } else {
-                    color = this._randomColor();
-                    this._ccColors[node.mergeCC] = color;
-                }
-                let material: THREE.LineBasicMaterial = new THREE.LineBasicMaterial({color: color});
+                let material: THREE.LineBasicMaterial = this._cameraMaterial(node);
                 let camera: THREE.LineSegments = new THREE.LineSegments(geometry, material);
                 this._cameras[node.key] = camera;
                 this._cameraGroup.add(camera);
+
+                if (true) {
+                    let cameraCenter: number[] = this._geoCoords.geodeticToEnu(
+                        node.computedLatLon.lat, node.computedLatLon.lon, node.alt,
+                        reference.lat, reference.lon, reference.alt);
+                    let gpsCenter: number[] = this._geoCoords.geodeticToEnu(
+                        node.originalLatLon.lat, node.originalLatLon.lon, node.alt,
+                        reference.lat, reference.lon, reference.alt);
+
+                    let geometry: THREE.Geometry = new THREE.Geometry();
+                    geometry.vertices.push(
+                        new THREE.Vector3(cameraCenter[0], cameraCenter[1], cameraCenter[2]),
+                        new THREE.Vector3(gpsCenter[0], gpsCenter[1], gpsCenter[2])
+                    );
+                    let material: THREE.LineBasicMaterial = new THREE.LineBasicMaterial({ color: 0xff00ff });
+                    let gps: THREE.LineSegments = new THREE.LineSegments(geometry, material);
+                    this._gpsGroup.add(gps);
+                }
             }
         }
+    }
+
+    private _cameraMaterial(node: Node): THREE.LineBasicMaterial {
+        let color: string;
+        if (node.mergeCC in this._ccColors) {
+            color = this._ccColors[node.mergeCC];
+        } else {
+            color = this._randomColor();
+            this._ccColors[node.mergeCC] = color;
+        }
+        return new THREE.LineBasicMaterial({color: color});
     }
 
     private _createGrid(): THREE.Object3D {
