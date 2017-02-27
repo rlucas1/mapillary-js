@@ -52,7 +52,7 @@ class Scene {
 
     public setup(): void {
         this._scene = new THREE.Scene();
-        this._grid = this._createGrid();
+        this._grid = this._gridObject();
         this._scene.add(this._grid);
 
         this._cameraGroup = new THREE.Object3D;
@@ -84,33 +84,40 @@ class Scene {
     public updateCameras(nodes: Node[], reference: ILatLonAlt): void {
         for (let node of nodes) {
             if (!(node.key in this._cameras)) {
-                let translation: number[] = this._nodeToTranslation(node, reference);
-                let transform: Transform = new Transform(node, null, translation);
-                let geometry: THREE.Geometry = this._cameraGeometry(transform, 1.0);
-                let material: THREE.LineBasicMaterial = this._cameraMaterial(node);
-                let camera: THREE.LineSegments = new THREE.LineSegments(geometry, material);
+                let camera: THREE.LineSegments = this._cameraObject(node, reference);
                 this._cameras[node.key] = camera;
                 this._cameraGroup.add(camera);
 
-                if (true) {
-                    let cameraCenter: number[] = this._geoCoords.geodeticToEnu(
-                        node.computedLatLon.lat, node.computedLatLon.lon, node.alt,
-                        reference.lat, reference.lon, reference.alt);
-                    let gpsCenter: number[] = this._geoCoords.geodeticToEnu(
-                        node.originalLatLon.lat, node.originalLatLon.lon, node.alt,
-                        reference.lat, reference.lon, reference.alt);
-
-                    let geometry: THREE.Geometry = new THREE.Geometry();
-                    geometry.vertices.push(
-                        new THREE.Vector3(cameraCenter[0], cameraCenter[1], cameraCenter[2]),
-                        new THREE.Vector3(gpsCenter[0], gpsCenter[1], gpsCenter[2])
-                    );
-                    let material: THREE.LineBasicMaterial = new THREE.LineBasicMaterial({ color: 0xff00ff });
-                    let gps: THREE.LineSegments = new THREE.LineSegments(geometry, material);
-                    this._gpsGroup.add(gps);
-                }
+                this._gpsGroup.add(this._gpsObject(node, reference));
             }
         }
+    }
+
+    private _cameraObject(node: Node, reference: ILatLonAlt): THREE.LineSegments {
+        let translation: number[] = this._nodeToTranslation(node, reference);
+        let transform: Transform = new Transform(node, null, translation);
+        let geometry: THREE.Geometry = this._cameraGeometry(transform, 1.0);
+        let material: THREE.LineBasicMaterial = this._cameraMaterial(node);
+        return new THREE.LineSegments(geometry, material);
+    }
+
+    private _cameraGeometry(transform: Transform, size: number): THREE.Geometry {
+        let origin: number [] = transform.unprojectBasic([0, 0], 0);
+        let topLeft: number[] = transform.unprojectBasic([0, 0], size);
+        let topRight: number[] = transform.unprojectBasic([1, 0], size);
+        let bottomRight: number[] = transform.unprojectBasic([1, 1], size);
+        let bottomLeft: number[] = transform.unprojectBasic([0, 1], size);
+        let geometry: THREE.Geometry = new THREE.Geometry();
+        geometry.vertices.push(
+            this._toV3(origin), this._toV3(topLeft),
+            this._toV3(origin), this._toV3(topRight),
+            this._toV3(origin), this._toV3(bottomRight),
+            this._toV3(origin), this._toV3(bottomLeft),
+            this._toV3(topLeft), this._toV3(topRight),
+            this._toV3(topRight), this._toV3(bottomRight),
+            // this._toV3(bottomRight), this._toV3(bottomLeft),
+            this._toV3(bottomLeft), this._toV3(topLeft));
+        return geometry;
     }
 
     private _cameraMaterial(node: Node): THREE.LineBasicMaterial {
@@ -124,7 +131,23 @@ class Scene {
         return new THREE.LineBasicMaterial({color: color});
     }
 
-    private _createGrid(): THREE.Object3D {
+    private _gpsObject(node: Node, reference: ILatLonAlt): THREE.LineSegments {
+        let cameraCenter: number[] = this._geoCoords.geodeticToEnu(
+            node.computedLatLon.lat, node.computedLatLon.lon, node.alt,
+            reference.lat, reference.lon, reference.alt);
+        let gpsCenter: number[] = this._geoCoords.geodeticToEnu(
+            node.originalLatLon.lat, node.originalLatLon.lon, node.alt,
+            reference.lat, reference.lon, reference.alt);
+
+        let geometry: THREE.Geometry = new THREE.Geometry();
+        geometry.vertices.push(this._toV3(cameraCenter),
+                               this._toV3(gpsCenter));
+
+        let material: THREE.LineBasicMaterial = new THREE.LineBasicMaterial({ color: 0xff00ff });
+        return new THREE.LineSegments(geometry, material);
+    }
+
+    private _gridObject(): THREE.Object3D {
         let geometry: THREE.Geometry = new THREE.Geometry();
         let N: number = 20;
         let scale: number = 2;
@@ -183,32 +206,6 @@ class Scene {
             color += letters[Math.floor(Math.random() * 16)];
         }
         return color;
-    }
-
-    private _cameraGeometry(transform: Transform, size: number): THREE.Geometry {
-        let origin: number [] = transform.unprojectBasic([0, 0], 0);
-        let topLeft: number[] = transform.unprojectBasic([0, 0], size);
-        let topRight: number[] = transform.unprojectBasic([1, 0], size);
-        let bottomRight: number[] = transform.unprojectBasic([1, 1], size);
-        let bottomLeft: number[] = transform.unprojectBasic([0, 1], size);
-        let geometry: THREE.Geometry = new THREE.Geometry();
-        geometry.vertices.push(this._toV3(origin));
-        geometry.vertices.push(this._toV3(topLeft));
-        geometry.vertices.push(this._toV3(origin));
-        geometry.vertices.push(this._toV3(topRight));
-        geometry.vertices.push(this._toV3(origin));
-        geometry.vertices.push(this._toV3(bottomRight));
-        geometry.vertices.push(this._toV3(origin));
-        geometry.vertices.push(this._toV3(bottomLeft));
-        geometry.vertices.push(this._toV3(topLeft));
-        geometry.vertices.push(this._toV3(topRight));
-        geometry.vertices.push(this._toV3(topRight));
-        geometry.vertices.push(this._toV3(bottomRight));
-        // geometry.vertices.push(this._toV3(bottomRight));
-        // geometry.vertices.push(this._toV3(bottomLeft));
-        geometry.vertices.push(this._toV3(bottomLeft));
-        geometry.vertices.push(this._toV3(topLeft));
-        return geometry;
     }
 
     private _toV3(v: number[]): THREE.Vector3 {
