@@ -79,6 +79,7 @@ export class ComponentController {
         this._uFalse(options.slider, "slider");
         this._uFalse(options.stats, "stats");
         this._uFalse(options.tag, "tag");
+        this._uFalse(options.spatialData, "spatialData");
 
         this._uTrue(options.attribution, "attribution");
         this._uTrue(options.bearing, "bearing");

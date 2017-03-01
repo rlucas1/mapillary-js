@@ -143,6 +143,14 @@ export interface IComponentOptions {
      * @default false
      */
     tag?: boolean | ITagConfiguration;
+
+    /**
+     * Enable 3D debugging of camera positions.
+     *
+     * @default false
+     */
+    spatialData?: boolean;
+
 }
 
 export default IComponentOptions;
