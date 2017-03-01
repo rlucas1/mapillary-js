@@ -47,13 +47,14 @@ class Scene {
     private _cameras: { [key: string]: THREE.Object3D } = {};
     private _ccColors: { [cc: string]: string } = {};
     private _gpsGroup: THREE.Object3D;
+    private _tile: THREE.Object3D;
 
     public get threejsScene(): THREE.Scene { return this._scene; }
 
     public setup(): void {
         this._scene = new THREE.Scene();
         this._grid = this._gridObject();
-        this._scene.add(this._grid);
+        // this._scene.add(this._grid);
 
         this._cameraGroup = new THREE.Object3D;
         this._scene.add(this._cameraGroup);
@@ -73,6 +74,9 @@ class Scene {
         this._scene.remove(this._gpsGroup);
         this._disposeObject(this._gpsGroup);
 
+        this._scene.remove(this._tile);
+        this._tile = undefined;
+
         this._scene = undefined;
     }
 
@@ -82,6 +86,10 @@ class Scene {
     }
 
     public updateCameras(nodes: Node[], reference: ILatLonAlt): void {
+        if (!this._tile) {
+            this._tile = this._tileObject(reference);
+            this._scene.add(this._tile);
+        }
         for (let node of nodes) {
             if (!(node.key in this._cameras)) {
                 let camera: THREE.LineSegments = this._cameraObject(node, reference);
@@ -145,6 +153,51 @@ class Scene {
 
         let material: THREE.LineBasicMaterial = new THREE.LineBasicMaterial({ color: 0xff00ff });
         return new THREE.LineSegments(geometry, material);
+    }
+
+    private _tileObject(reference: ILatLonAlt): THREE.Object3D {
+        function lon2tile(lon: number, zoom: number): number {
+            return Math.floor((lon + 180) / 360 * Math.pow(2, zoom));
+        }
+        function lat2tile(lat: number, zoom: number): number {
+            return Math.floor((1 - Math.log(Math.tan(lat * Math.PI / 180) +
+                               1 / Math.cos(lat * Math.PI / 180)) / Math.PI) / 2 * Math.pow(2, zoom));
+        }
+        function tile2lon(x: number, z: number): number {
+            return x / Math.pow(2, z) * 360 - 180;
+        }
+        function tile2lat(y: number, z: number): number {
+            let n: number = Math.PI - 2 * Math.PI * y / Math.pow(2, z);
+            return 180 / Math.PI * Math.atan(0.5 * (Math.exp(n) - Math.exp(-n)));
+        }
+
+        let z: number = 17;
+        let x: number = lon2tile(reference.lon, z);
+        let y: number = lat2tile(reference.lat, z);
+
+        let minLon: number = tile2lon(x, z);
+        let maxLon: number = tile2lon(x + 1, z);
+        let minLat: number = tile2lat(y + 1, z);
+        let maxLat: number = tile2lat(y, z);
+
+        let topLeft: number[] = this._geoCoords.geodeticToEnu(
+            maxLat, minLon, -2, reference.lat, reference.lon, reference.alt);
+        let bottomRight: number[] = this._geoCoords.geodeticToEnu(
+            minLat, maxLon, -2, reference.lat, reference.lon, reference.alt);
+
+        let width: number = bottomRight[0] - topLeft[0];
+        let height: number = topLeft[1] - bottomRight[1];
+        let geometry: THREE.Geometry = new THREE.PlaneGeometry(width, height);
+
+        let textureLoader: THREE.TextureLoader = new THREE.TextureLoader();
+        let texture: THREE.Texture = textureLoader.load(this._mapTileURL);
+
+        let material: THREE.MeshBasicMaterial = new THREE.MeshBasicMaterial({map: texture});
+        let mesh: THREE.Mesh = new THREE.Mesh(geometry, material);
+        mesh.position.x = (topLeft[0] + bottomRight[0]) / 2;
+        mesh.position.y = (topLeft[1] + bottomRight[1]) / 2;
+        mesh.position.z = (topLeft[2] + bottomRight[2]) / 2;
+        return mesh;
     }
 
     private _gridObject(): THREE.Object3D {
