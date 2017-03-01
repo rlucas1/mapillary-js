@@ -38,9 +38,12 @@ interface IDisposable {
 
 
 class Scene {
+    public needsRender: boolean = false;
+
     private _spatial: Spatial = new Spatial();
     private _geoCoords: GeoCoords = new GeoCoords();
 
+    private _reference: ILatLonAlt;
     private _scene: THREE.Scene;
     private _grid: THREE.Object3D;
     private _cameraGroup: THREE.Object3D;
@@ -49,60 +52,90 @@ class Scene {
     private _gpsGroup: THREE.Object3D;
     private _tile: THREE.Object3D;
 
+    // options
+    private _showTile: boolean = true;
+    private _tileURL: string;
+
     public get threejsScene(): THREE.Scene { return this._scene; }
 
-    public setup(): void {
+    public setup(reference: ILatLonAlt): void {
+        this._reference = reference;
+
         this._scene = new THREE.Scene();
         this._grid = this._gridObject();
-        // this._scene.add(this._grid);
+        this._scene.add(this._grid);
+
+        this._tile = this._tileObject(this._reference);
+        this._scene.add(this._tile);
 
         this._cameraGroup = new THREE.Object3D;
         this._scene.add(this._cameraGroup);
 
         this._gpsGroup = new THREE.Object3D;
         this._scene.add(this._gpsGroup);
+
+        this.needsRender = true;
     }
 
     public dispose(): void {
-        this._scene.remove(this._grid);
-        this._disposeObject(this._grid);
+        if (this._grid) {
+            this._scene.remove(this._grid);
+            this._disposeObject(this._grid);
+            this._grid = undefined;
+        }
 
-        this._scene.remove(this._cameraGroup);
-        this._disposeObject(this._cameraGroup);
-        this._cameras = {};
+        if (this._cameraGroup) {
+            this._scene.remove(this._cameraGroup);
+            this._disposeObject(this._cameraGroup);
+            this._cameras = {};
+            this._cameraGroup = undefined;
+        }
 
-        this._scene.remove(this._gpsGroup);
-        this._disposeObject(this._gpsGroup);
+        if (this._gpsGroup) {
+            this._scene.remove(this._gpsGroup);
+            this._disposeObject(this._gpsGroup);
+            this._gpsGroup = undefined;
+        }
 
-        this._scene.remove(this._tile);
-        this._tile = undefined;
+        if (this._tile) {
+            this._scene.remove(this._tile);
+            this._tile = undefined;
+        }
 
         this._scene = undefined;
     }
 
-    public reset(): void {
+    public reset(reference: ILatLonAlt): void {
         this.dispose();
-        this.setup();
+        this.setup(reference);
     }
 
-    public updateCameras(nodes: Node[], reference: ILatLonAlt): void {
-        if (!this._tile) {
-            this._tile = this._tileObject(reference);
-            this._scene.add(this._tile);
-        }
+    public updateCameras(nodes: Node[]): void {
         for (let node of nodes) {
             if (!(node.key in this._cameras)) {
-                let camera: THREE.LineSegments = this._cameraObject(node, reference);
+                let camera: THREE.LineSegments = this._cameraObject(node);
                 this._cameras[node.key] = camera;
                 this._cameraGroup.add(camera);
 
-                this._gpsGroup.add(this._gpsObject(node, reference));
+                this._gpsGroup.add(this._gpsObject(node));
             }
         }
     }
 
-    private _cameraObject(node: Node, reference: ILatLonAlt): THREE.LineSegments {
-        let translation: number[] = this._nodeToTranslation(node, reference);
+    public setTileURL(url: string): void {
+        this._tileURL = url;
+    }
+
+    public setShowTile(v: boolean): void {
+        if (this._showTile !== v) {
+            this._showTile = v;
+            this._tile.visible = v;
+            this.needsRender = true;
+        }
+    }
+
+    private _cameraObject(node: Node): THREE.LineSegments {
+        let translation: number[] = this._nodeToTranslation(node);
         let transform: Transform = new Transform(node, null, translation);
         let geometry: THREE.Geometry = this._cameraGeometry(transform, 1.0);
         let material: THREE.LineBasicMaterial = this._cameraMaterial(node);
@@ -139,13 +172,13 @@ class Scene {
         return new THREE.LineBasicMaterial({color: color});
     }
 
-    private _gpsObject(node: Node, reference: ILatLonAlt): THREE.LineSegments {
+    private _gpsObject(node: Node): THREE.LineSegments {
         let cameraCenter: number[] = this._geoCoords.geodeticToEnu(
             node.computedLatLon.lat, node.computedLatLon.lon, node.alt,
-            reference.lat, reference.lon, reference.alt);
+            this._reference.lat, this._reference.lon, this._reference.alt);
         let gpsCenter: number[] = this._geoCoords.geodeticToEnu(
-            node.originalLatLon.lat, node.originalLatLon.lon, node.alt,
-            reference.lat, reference.lon, reference.alt);
+            node.originalLatLon.lat, node.originalLatLon.lon, 2,
+            this._reference.lat, this._reference.lon, this._reference.alt);
 
         let geometry: THREE.Geometry = new THREE.Geometry();
         geometry.vertices.push(this._toV3(cameraCenter),
@@ -190,7 +223,8 @@ class Scene {
         let geometry: THREE.Geometry = new THREE.PlaneGeometry(width, height);
 
         let textureLoader: THREE.TextureLoader = new THREE.TextureLoader();
-        let texture: THREE.Texture = textureLoader.load(this._mapTileURL);
+        let url: string = this._tileURL.replace(/{z}/, `${z}`).replace(/{x}/, `${x}`).replace(/{y}/, `${y}`);
+        let texture: THREE.Texture = textureLoader.load(url);
 
         let material: THREE.MeshBasicMaterial = new THREE.MeshBasicMaterial({map: texture});
         let mesh: THREE.Mesh = new THREE.Mesh(geometry, material);
@@ -238,14 +272,14 @@ class Scene {
     }
 
     // duplicated with StateBase._nodeToTranslation()
-    private _nodeToTranslation(node: Node, reference: ILatLonAlt): number[] {
+    private _nodeToTranslation(node: Node): number[] {
         let C: number[] = this._geoCoords.geodeticToEnu(
             node.latLon.lat,
             node.latLon.lon,
             node.alt,
-            reference.lat,
-            reference.lon,
-            reference.alt);
+            this._reference.lat,
+            this._reference.lon,
+            this._reference.alt);
 
         let RC: THREE.Vector3 = this._spatial.rotate(C, node.rotation);
 
@@ -282,28 +316,23 @@ export class SpatialDataComponent extends Component<IComponentConfiguration> {
         console.log("constructing");
     }
 
+    public get scene(): Scene { return this._scene; }
+
     protected _activate(): void {
         console.log("activating");
-        this._scene = new Scene();
-        this._scene.setup();
 
         let nodes$: Observable<Node[]> = this._navigator.graphService.graph$
             .map(this._nodesFromGraph);
 
         this._resetSubscription = this._navigator.stateService.reference$
             .subscribe((reference: ILatLonAlt) => {
-                this._scene.reset();
+                this._scene.reset(reference);
             });
 
-        this._graphChangeSubscription = Observable
-            .combineLatest([
-                    nodes$,
-                    this._navigator.stateService.reference$,
-                ])
-            .subscribe(
-                ([nodes, reference]: [Node[], ILatLonAlt]): void => {
-                    this._scene.updateCameras(nodes, reference);
-                });
+        this._graphChangeSubscription = nodes$
+            .subscribe((nodes: Node[]): void => {
+                this._scene.updateCameras(nodes);
+            });
 
 
         this._renderSubscription = this._navigator.stateService.currentState$
@@ -312,7 +341,6 @@ export class SpatialDataComponent extends Component<IComponentConfiguration> {
     }
 
     protected _deactivate(): void {
-        // release memory
         this._scene.dispose();
         this._renderSubscription.unsubscribe();
         this._graphChangeSubscription.unsubscribe();
@@ -324,38 +352,24 @@ export class SpatialDataComponent extends Component<IComponentConfiguration> {
     }
 
     private _renderHash(frame: IFrame): IGLRenderHash {
-        // determine if render is needed while updating scene
-        // specific properies.
-        let needsRender: boolean = this._updateScene(frame);
-
         // return render hash with render function and
         // render in foreground.
         return {
             name: this._name,
             render: {
                 frameId: frame.id,
-                needsRender: needsRender,
+                needsRender: this._scene.needsRender,
                 render: this._render.bind(this),
                 stage: GLRenderStage.Foreground,
             },
         };
     }
 
-    private _updateScene(frame: IFrame): boolean {
-        if (!frame ||
-            !frame.state.currentNode) {
-            return false;
-        }
-
-        let needRender: boolean = false;
-
-        return needRender;
-    }
-
     private _render(
         perspectiveCamera: THREE.PerspectiveCamera,
         renderer: THREE.WebGLRenderer): void {
 
+        this._scene.needsRender = false;
         renderer.render(this._scene.threejsScene, perspectiveCamera);
     }
 
