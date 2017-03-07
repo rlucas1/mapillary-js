@@ -50,11 +50,13 @@ class Scene {
     private _cameras: { [key: string]: THREE.Object3D } = {};
     private _ccColors: { [cc: string]: string } = {};
     private _gpsGroup: THREE.Object3D;
+    private _pointsGroup: THREE.Object3D;
     private _tile: THREE.Object3D;
 
     // options
     private _showCameras: boolean = true;
     private _showGPS: boolean = true;
+    private _showPoints: boolean = true;
     private _showGrid: boolean = true;
     private _showTile: boolean = true;
     private _tileURL: string;
@@ -76,6 +78,9 @@ class Scene {
 
         this._gpsGroup = new THREE.Object3D;
         this._scene.add(this._gpsGroup);
+
+        this._pointsGroup = new THREE.Object3D;
+        this._scene.add(this._pointsGroup);
 
         this.needsRender = true;
     }
@@ -100,6 +105,12 @@ class Scene {
             this._gpsGroup = undefined;
         }
 
+        if (this._pointsGroup) {
+            this._scene.remove(this._pointsGroup);
+            this._disposeObject(this._pointsGroup);
+            this._pointsGroup = undefined;
+        }
+
         if (this._tile) {
             this._scene.remove(this._tile);
             this._tile = undefined;
@@ -113,6 +124,50 @@ class Scene {
         this.setup(reference);
     }
 
+    public fetchAtomic(node: Node): void {
+        let url: string = `https://s3-eu-west-1.amazonaws.com/mapillary.private.images/${node.key}/sfm/v1.0/atomic_reconstruction.json`;
+
+        let xmlHTTP: XMLHttpRequest = new XMLHttpRequest();
+        xmlHTTP.open("GET", url, true);
+        xmlHTTP.timeout = 15000;
+        xmlHTTP.onload = (pe: ProgressEvent) => {
+            this.loadPoints(node, JSON.parse(xmlHTTP.response));
+        };
+        xmlHTTP.onerror = (e: Event) => {
+            console.log("Error downloading atomic reconstruction", e);
+        };
+        xmlHTTP.send();
+    }
+
+    public loadPoints(node: Node, reconstruction: any): void {
+        let translation: number[] = this._nodeToTranslation(node);
+        let transform: Transform = new Transform(node, null, translation);
+
+        let isrt: THREE.Matrix4 = new THREE.Matrix4().getInverse(transform.srt);
+
+        let matParams: THREE.PointsMaterialParameters = {};
+        matParams.size = 1;
+        let material: THREE.PointsMaterial = new THREE.PointsMaterial({
+            size: 1,
+            sizeAttenuation: false,
+            vertexColors: THREE.VertexColors,
+        });
+
+        let geometry: THREE.Geometry = new THREE.Geometry();
+        for (let key of Object.keys(reconstruction.points)) {
+            let pa: number[] = reconstruction.points[key].coordinates;
+            let p: THREE.Vector3 = new THREE.Vector3(pa[0], pa[1], pa[2]);
+            p.applyMatrix4(isrt);
+            let c: number[] = reconstruction.points[key].color;
+            let color: THREE.Color = new THREE.Color();
+            color.setRGB(c[0] / 255.0, c[1] / 255.0, c[2] / 255.0);
+            geometry.vertices.push(p);
+            geometry.colors.push(color);
+        }
+
+        this._pointsGroup.add(new THREE.Points(geometry, material));
+    }
+
     public updateCameras(nodes: Node[]): void {
         for (let node of nodes) {
             if (!(node.key in this._cameras)) {
@@ -121,6 +176,8 @@ class Scene {
                 this._cameraGroup.add(camera);
 
                 this._gpsGroup.add(this._gpsObject(node));
+
+                this.fetchAtomic(node);
             }
         }
     }
@@ -141,6 +198,14 @@ class Scene {
         if (this._showGPS !== v) {
             this._showGPS = v;
             this._gpsGroup.visible = v;
+            this.needsRender = true;
+        }
+    }
+
+    public setShowPoints(v: boolean): void {
+        if (this._showPoints !== v) {
+            this._showPoints = v;
+            this._pointsGroup.visible = v;
             this.needsRender = true;
         }
     }
@@ -333,6 +398,7 @@ export class SpatialDataComponent extends Component<IComponentConfiguration> {
 
     private _renderSubscription: Subscription;
     private _graphChangeSubscription: Subscription;
+    private _currentNodeSubscription: Subscription;
     private _resetSubscription: Subscription;
 
     private _scene: Scene = new Scene();
@@ -340,14 +406,11 @@ export class SpatialDataComponent extends Component<IComponentConfiguration> {
 
     constructor(name: string, container: Container, navigator: Navigator) {
         super(name, container, navigator);
-        console.log("constructing");
     }
 
     public get scene(): Scene { return this._scene; }
 
     protected _activate(): void {
-        console.log("activating");
-
         let nodes$: Observable<Node[]> = this._navigator.graphService.graph$
             .map(this._nodesFromGraph);
 
@@ -361,6 +424,10 @@ export class SpatialDataComponent extends Component<IComponentConfiguration> {
                 this._scene.updateCameras(nodes);
             });
 
+        // this._currentNodeSubscription = this._navigator.stateService.currentNode$
+        //     .subscribe((node: Node): void => {
+        //         this._scene.setCurrentCamera(node);
+        //     });
 
         this._renderSubscription = this._navigator.stateService.currentState$
             .map(this._renderHash.bind(this))
@@ -371,6 +438,7 @@ export class SpatialDataComponent extends Component<IComponentConfiguration> {
         this._scene.dispose();
         this._renderSubscription.unsubscribe();
         this._graphChangeSubscription.unsubscribe();
+        this._currentNodeSubscription.unsubscribe();
         this._resetSubscription.unsubscribe();
     }
 
@@ -402,12 +470,10 @@ export class SpatialDataComponent extends Component<IComponentConfiguration> {
 
     private _nodesFromGraph(graph: Graph): Node[] {
         let nodes: Node[] = [];
-        for (let key in graph.nodes) {
-            if (graph.nodes.hasOwnProperty(key)) {
-                let node: Node = graph.nodes[key];
-                if (node.full) {
-                    nodes.push(node);
-                }
+        for (let key of Object.keys(graph.nodes)) {
+            let node: Node = graph.nodes[key];
+            if (node.full) {
+                nodes.push(node);
             }
         }
         return nodes;
