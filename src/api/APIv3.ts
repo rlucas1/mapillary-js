@@ -117,11 +117,14 @@ export class APIv3 {
         ];
 
         this._propertiesSpatial = [
+            "altitude",
             "atomic_scale",
             "ca",
             "calt",
             "cca",
             "cfocal",
+            "ck1",
+            "ck2",
             "gpano",
             "height",
             "merge_cc",
@@ -129,6 +132,9 @@ export class APIv3 {
             "c_rotation",
             "orientation",
             "width",
+            "x",
+            "y",
+            "z",
         ];
 
         this._propertiesUser = [

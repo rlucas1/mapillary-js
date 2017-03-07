@@ -143,6 +143,17 @@ export class Node {
     }
 
     /**
+     * Get computedAlt.
+     *
+     * @description Will not be set if SfM has not been run.
+     *
+     * @returns {number} SfM computed altitude, measured in meters.
+     */
+    public get computedAlt(): number {
+        return this._fill.calt;
+    }
+
+    /**
      * Get focal.
      *
      * @description Will not be set if SfM has not been run.
@@ -319,6 +330,16 @@ export class Node {
      */
     public get originalLatLon(): ILatLon {
         return this._core.l;
+    }
+
+    /**
+     * Get originalAlt.
+     *
+     * @returns {number} Original EXIF altitude, measured in
+     * meters.
+     */
+    public get originalAlt(): number {
+        return this._fill.altitude;
     }
 
     /**
