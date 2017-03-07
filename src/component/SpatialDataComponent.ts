@@ -53,6 +53,9 @@ class Scene {
     private _tile: THREE.Object3D;
 
     // options
+    private _showCameras: boolean = true;
+    private _showGPS: boolean = true;
+    private _showGrid: boolean = true;
     private _showTile: boolean = true;
     private _tileURL: string;
 
@@ -124,6 +127,30 @@ class Scene {
 
     public setTileURL(url: string): void {
         this._tileURL = url;
+    }
+
+    public setShowCameras(v: boolean): void {
+        if (this._showCameras !== v) {
+            this._showCameras = v;
+            this._cameraGroup.visible = v;
+            this.needsRender = true;
+        }
+    }
+
+    public setShowGPS(v: boolean): void {
+        if (this._showGPS !== v) {
+            this._showGPS = v;
+            this._gpsGroup.visible = v;
+            this.needsRender = true;
+        }
+    }
+
+    public setShowGrid(v: boolean): void {
+        if (this._showGrid !== v) {
+            this._showGrid = v;
+            this._grid.visible = v;
+            this.needsRender = true;
+        }
     }
 
     public setShowTile(v: boolean): void {
