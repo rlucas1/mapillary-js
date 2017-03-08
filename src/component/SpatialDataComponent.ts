@@ -48,7 +48,7 @@ class Scene {
     private _grid: THREE.Object3D;
     private _cameraGroup: THREE.Object3D;
     private _cameras: { [key: string]: THREE.Object3D } = {};
-    private _ccColors: { [cc: string]: string } = {};
+    private _ccColors: { [cc: number]: number } = {};
     private _gpsGroup: THREE.Object3D;
     private _pointsGroup: THREE.Object3D;
     private _tile: THREE.Object3D;
@@ -59,6 +59,7 @@ class Scene {
     private _showPoints: boolean;
     private _showGrid: boolean;
     private _showTile: boolean;
+    private _paintConnectedComponents: boolean = false;
     private _tileURL: string;
 
     public get threejsScene(): THREE.Scene { return this._scene; }
@@ -130,50 +131,6 @@ class Scene {
         this.setup(reference);
     }
 
-    public fetchAtomic(node: Node): void {
-        let url: string = `https://s3-eu-west-1.amazonaws.com/mapillary.private.images/${node.key}/sfm/v1.0/atomic_reconstruction.json`;
-
-        let xmlHTTP: XMLHttpRequest = new XMLHttpRequest();
-        xmlHTTP.open("GET", url, true);
-        xmlHTTP.timeout = 15000;
-        xmlHTTP.onload = (pe: ProgressEvent) => {
-            this.loadPoints(node, JSON.parse(xmlHTTP.response));
-        };
-        xmlHTTP.onerror = (e: Event) => {
-            console.log("Error downloading atomic reconstruction", e);
-        };
-        xmlHTTP.send();
-    }
-
-    public loadPoints(node: Node, reconstruction: any): void {
-        let translation: number[] = this._nodeToTranslation(node);
-        let transform: Transform = new Transform(node, null, translation);
-
-        let isrt: THREE.Matrix4 = new THREE.Matrix4().getInverse(transform.srt);
-
-        let matParams: THREE.PointsMaterialParameters = {};
-        matParams.size = 1;
-        let material: THREE.PointsMaterial = new THREE.PointsMaterial({
-            size: 1,
-            sizeAttenuation: false,
-            vertexColors: THREE.VertexColors,
-        });
-
-        let geometry: THREE.Geometry = new THREE.Geometry();
-        for (let key of Object.keys(reconstruction.points)) {
-            let pa: number[] = reconstruction.points[key].coordinates;
-            let p: THREE.Vector3 = new THREE.Vector3(pa[0], pa[1], pa[2]);
-            p.applyMatrix4(isrt);
-            let c: number[] = reconstruction.points[key].color;
-            let color: THREE.Color = new THREE.Color();
-            color.setRGB(c[0] / 255.0, c[1] / 255.0, c[2] / 255.0);
-            geometry.vertices.push(p);
-            geometry.colors.push(color);
-        }
-
-        this._pointsGroup.add(new THREE.Points(geometry, material));
-    }
-
     public updateCameras(nodes: Node[]): void {
         for (let node of nodes) {
             if (!(node.key in this._cameras)) {
@@ -183,7 +140,7 @@ class Scene {
 
                 this._gpsGroup.add(this._gpsObject(node));
 
-                this.fetchAtomic(node);
+                this._fetchAtomic(node);
             }
         }
     }
@@ -232,11 +189,60 @@ class Scene {
         }
     }
 
+    private _fetchAtomic(node: Node): void {
+        let url: string = `https://s3-eu-west-1.amazonaws.com/mapillary.private.images/${node.key}/sfm/v1.0/atomic_reconstruction.json`;
+
+        let xmlHTTP: XMLHttpRequest = new XMLHttpRequest();
+        xmlHTTP.open("GET", url, true);
+        xmlHTTP.timeout = 15000;
+        xmlHTTP.onload = (pe: ProgressEvent) => {
+            this._loadPoints(node, JSON.parse(xmlHTTP.response));
+        };
+        xmlHTTP.onerror = (e: Event) => {
+            console.log("Error downloading atomic reconstruction", e);
+        };
+        xmlHTTP.send();
+    }
+
+    private _loadPoints(node: Node, reconstruction: any): void {
+        let translation: number[] = this._nodeToTranslation(node);
+        let transform: Transform = new Transform(node, null, translation);
+
+        let isrt: THREE.Matrix4 = new THREE.Matrix4().getInverse(transform.srt);
+
+        let matParams: THREE.PointsMaterialParameters = {};
+        matParams.size = 1;
+        let material: THREE.PointsMaterial = new THREE.PointsMaterial({
+            size: 1,
+            sizeAttenuation: false,
+            vertexColors: THREE.VertexColors,
+        });
+
+        let geometry: THREE.Geometry = new THREE.Geometry();
+        for (let key of Object.keys(reconstruction.points)) {
+            let pa: number[] = reconstruction.points[key].coordinates;
+            let p: THREE.Vector3 = new THREE.Vector3(pa[0], pa[1], pa[2]);
+            p.applyMatrix4(isrt);
+            let color: THREE.Color = new THREE.Color();
+            if (this._paintConnectedComponents) {
+                color.setHex(this._ccColor(node.mergeCC));
+            } else {
+                let c: number[] = reconstruction.points[key].color;
+                color.setRGB(c[0] / 255.0, c[1] / 255.0, c[2] / 255.0);
+            }
+            geometry.vertices.push(p);
+            geometry.colors.push(color);
+        }
+
+        this._pointsGroup.add(new THREE.Points(geometry, material));
+    }
+
     private _cameraObject(node: Node): THREE.LineSegments {
         let translation: number[] = this._nodeToTranslation(node);
         let transform: Transform = new Transform(node, null, translation);
         let geometry: THREE.Geometry = this._cameraGeometry(transform, 1.0);
-        let material: THREE.LineBasicMaterial = this._cameraMaterial(node);
+        let color: number = this._ccColor(node.mergeCC);
+        let material: THREE.LineBasicMaterial = new THREE.LineBasicMaterial({color: color});
         return new THREE.LineSegments(geometry, material);
     }
 
@@ -259,15 +265,15 @@ class Scene {
         return geometry;
     }
 
-    private _cameraMaterial(node: Node): THREE.LineBasicMaterial {
-        let color: string;
-        if (node.mergeCC in this._ccColors) {
-            color = this._ccColors[node.mergeCC];
+    private _ccColor(mergeCC: number): number {
+        let color: number;
+        if (mergeCC in this._ccColors) {
+            color = this._ccColors[mergeCC];
         } else {
             color = this._randomColor();
-            this._ccColors[node.mergeCC] = color;
+            this._ccColors[mergeCC] = color;
         }
-        return new THREE.LineBasicMaterial({color: color});
+        return color;
     }
 
     private _gpsObject(node: Node): THREE.LineSegments {
@@ -384,13 +390,10 @@ class Scene {
         return [-RC.x, -RC.y, -RC.z];
     }
 
-    private _randomColor(): string {
-        let letters: string = "0123456789ABCDEF";
-        let color: string = "#";
-        for (let i: number = 0; i < 6; i++ ) {
-            color += letters[Math.floor(Math.random() * 16)];
-        }
-        return color;
+    private _randomColor(): number {
+        return Math.floor(Math.random() * 255) * 256 * 256
+             + Math.floor(Math.random() * 255) * 256
+             + Math.floor(Math.random() * 255);
     }
 
     private _toV3(v: number[]): THREE.Vector3 {
@@ -408,7 +411,7 @@ export class SpatialDataComponent extends Component<IComponentConfiguration> {
     private _resetSubscription: Subscription;
 
     private _scene: Scene = new Scene();
-    private _hideOtherComponents = false;
+    private _hideOtherComponents: boolean = false;
 
 
     constructor(name: string, container: Container, navigator: Navigator) {
@@ -417,7 +420,7 @@ export class SpatialDataComponent extends Component<IComponentConfiguration> {
 
     public get scene(): Scene { return this._scene; }
 
-    public setHideOtherComponnents(v: boolean) {
+    public setHideOtherComponents(v: boolean): void {
         this._hideOtherComponents = v;
         this._scene.needsRender = true;
     }
@@ -477,7 +480,7 @@ export class SpatialDataComponent extends Component<IComponentConfiguration> {
         renderer: THREE.WebGLRenderer): void {
 
         this._scene.needsRender = false;
-        if (this._hideOtherComponents){
+        if (this._hideOtherComponents) {
             renderer.clear();
         }
         renderer.render(this._scene.threejsScene, perspectiveCamera);
