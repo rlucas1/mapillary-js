@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>MapillaryJS Debug Page</title>
+    <meta charset='utf-8'>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+
+    <link rel='stylesheet' href='dist/mapillary.min.css' />
+    <style>
+        body { margin: 0; padding: 0; }
+        html, body { width: 100%; height: 100%; }
+        #viewer { width: 90%; height: 90%; }
+    </style>
+</head>
+<body>
+    <div id='viewer'></div>
+    <input id="moveToKeyInput" type="text" value="XmptY6GEqvOxS76GVUA3XQ"></input>
+    <button onclick="moveToKey()">Move to Key</button>
+    <button onclick="fly()">Fly</button><button onclick="walk()">Walk</button>
+    <br>
+    <button onclick="showCameras(true)">Show Cameras</button><button onclick="showCameras(false)">Hide Cameras</button>
+    <button onclick="showTile(true)">Show Tile</button><button onclick="showTile(false)">Hide Tile</button>
+    <button onclick="showGPS(true)">Show GPS</button><button onclick="showGPS(false)">Hide GPS</button>
+    <button onclick="showPoints(true)">Show Points</button><button onclick="showPoints(false)">Hide Points</button>
+    <button onclick="showGrid(true)">Show Grid</button><button onclick="showGrid(false)">Hide Grid</button>
+    <button onclick="showImages(true)">Show Images</button><button onclick="showImages(false)">Hide Images</button>
+<!--     <button onclick="paintConnectedComponents(true)">Show CC</button><button onclick="paintConnectedComponents(false)">Hide CC</button>
+ -->
+
+    <script src='dist/mapillary.js'></script>
+    <script>
+        var viewer = new Mapillary.Viewer(
+            "viewer",
+            "QjI1NnU0aG5FZFZISE56U3R5aWN4ZzpkYzg0NzE3MDA0YTRhZjlh",
+            "zarcRdNFZwg3FkXNcsFeGw",
+            {
+                component: {
+                    cover: false,
+                    spatialData: true,
+                    // imagePlane: false,
+                },
+                renderMode: Mapillary.RenderMode.Letterbox,
+            }
+        );
+
+        var spatial = viewer.getComponent("spatialData");
+
+        spatial.scene.setTileURL("http://a.tile.openstreetmap.org/{z}/{x}/{y}.png");
+        // spatial.scene.setTileURL("http://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/${z}/${y}/${x}");
+
+        window.addEventListener("resize", function() { viewer.resize(); });
+
+        function moveToKey() {
+            viewer.moveToKey(moveToKeyInput.value);
+        }
+
+        function fly() {
+            viewer.fly();
+        }
+
+        function walk() {
+            viewer.walk();
+        }
+
+        function showCameras(v) {
+            spatial.scene.setShowCameras(v);
+        }
+        function showTile(v) {
+            spatial.scene.setShowTile(v);
+        }
+        function showGPS(v) {
+            spatial.scene.setShowGPS(v);
+        }
+        function showPoints(v) {
+            spatial.scene.setShowPoints(v);
+        }
+        function showGrid(v) {
+            spatial.scene.setShowGrid(v);
+        }
+        function showImages(v) {
+            spatial.setHideOtherComponents(!v);
+        }
+        function paintConnectedComponents(v) {
+            spatial.scene.setPaintConnectedComponents(v);
+        }
+
+    </script>
+</body>
+</html>
