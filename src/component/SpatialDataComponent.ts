@@ -54,11 +54,11 @@ class Scene {
     private _tile: THREE.Object3D;
 
     // options
-    private _showCameras: boolean = true;
-    private _showGPS: boolean = true;
-    private _showPoints: boolean = true;
-    private _showGrid: boolean = true;
-    private _showTile: boolean = true;
+    private _showCameras: boolean;
+    private _showGPS: boolean;
+    private _showPoints: boolean;
+    private _showGrid: boolean;
+    private _showTile: boolean;
     private _tileURL: string;
 
     public get threejsScene(): THREE.Scene { return this._scene; }
@@ -81,6 +81,12 @@ class Scene {
 
         this._pointsGroup = new THREE.Object3D;
         this._scene.add(this._pointsGroup);
+
+        this.setShowCameras(false);
+        this.setShowGPS(false);
+        this.setShowPoints(false);
+        this.setShowGrid(false);
+        this.setShowTile(false);
 
         this.needsRender = true;
     }
@@ -402,6 +408,7 @@ export class SpatialDataComponent extends Component<IComponentConfiguration> {
     private _resetSubscription: Subscription;
 
     private _scene: Scene = new Scene();
+    private _hideOtherComponents = false;
 
 
     constructor(name: string, container: Container, navigator: Navigator) {
@@ -409,6 +416,11 @@ export class SpatialDataComponent extends Component<IComponentConfiguration> {
     }
 
     public get scene(): Scene { return this._scene; }
+
+    public setHideOtherComponnents(v: boolean) {
+        this._hideOtherComponents = v;
+        this._scene.needsRender = true;
+    }
 
     protected _activate(): void {
         let nodes$: Observable<Node[]> = this._navigator.graphService.graph$
@@ -465,6 +477,9 @@ export class SpatialDataComponent extends Component<IComponentConfiguration> {
         renderer: THREE.WebGLRenderer): void {
 
         this._scene.needsRender = false;
+        if (this._hideOtherComponents){
+            renderer.clear();
+        }
         renderer.render(this._scene.threejsScene, perspectiveCamera);
     }
 
