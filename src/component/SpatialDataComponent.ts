@@ -73,6 +73,7 @@ class Scene {
     private _gpsGroup: THREE.Object3D;
     private _pointsGroup: THREE.Object3D;
     private _tile: THREE.Object3D;
+    private _terrain: THREE.Object3D;
 
     // options
     private _showCameras: boolean;
@@ -80,6 +81,7 @@ class Scene {
     private _showPoints: boolean;
     private _showGrid: boolean;
     private _showTile: boolean;
+    private _showTerrain: boolean;
     private _paintConnectedComponents: boolean = false;
     private _tileURL: string;
 
@@ -111,6 +113,7 @@ class Scene {
         this.setShowPoints(false);
         this.setShowGrid(false);
         this.setShowTile(false);
+        this.setShowTerrain(false);
 
         this.needsRender = true;
     }
@@ -144,6 +147,11 @@ class Scene {
         if (this._tile) {
             this._scene.remove(this._tile);
             this._tile = undefined;
+        }
+
+        if (this._terrain) {
+            this._scene.remove(this._terrain);
+            this._terrain = undefined;
         }
 
         this._scene = undefined;
@@ -209,6 +217,16 @@ class Scene {
             this._showTile = v;
             this._tile.visible = v;
             this.needsRender = true;
+        }
+    }
+
+    public setShowTerrain(v: boolean): void {
+        if (this._showTerrain !== v) {
+            this._showTerrain = v;
+            if (this._terrain) {
+                this._terrain.visible = v;
+                this.needsRender = true;
+            }
         }
     }
 
@@ -394,8 +412,8 @@ class Scene {
             context.drawImage(imageObj, 0, 0);
             let imageData: ImageData = context.getImageData(0, 0, width, height);
 
-            let mesh: THREE.Object3D = this._terrainMesh(imageData, width, height, topLeft, bottomRight);
-            parent.add(mesh);
+            this._terrain = this._terrainMesh(imageData, width, height, topLeft, bottomRight);
+            parent.add(this._terrain);
         };
         imageObj.src = url;
     }
