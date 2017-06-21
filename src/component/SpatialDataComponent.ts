@@ -37,6 +37,27 @@ interface IDisposable {
 }
 
 
+class OsmMath {
+    public static lon2tile(lon: number, zoom: number): number {
+        return Math.floor((lon + 180) / 360 * Math.pow(2, zoom));
+    }
+
+    public static lat2tile(lat: number, zoom: number): number {
+        return Math.floor((1 - Math.log(Math.tan(lat * Math.PI / 180) +
+                            1 / Math.cos(lat * Math.PI / 180)) / Math.PI) / 2 * Math.pow(2, zoom));
+    }
+
+    public static tile2lon(x: number, z: number): number {
+        return x / Math.pow(2, z) * 360 - 180;
+    }
+
+    public static tile2lat(y: number, z: number): number {
+        let n: number = Math.PI - 2 * Math.PI * y / Math.pow(2, z);
+        return 180 / Math.PI * Math.atan(0.5 * (Math.exp(n) - Math.exp(-n)));
+    }
+}
+
+
 class Scene {
     public needsRender: boolean = false;
 
@@ -73,6 +94,8 @@ class Scene {
 
         this._tile = this._tileObject(this._reference);
         this._scene.add(this._tile);
+
+        this._loadTerrain(this._scene, this._reference);
 
         this._cameraGroup = new THREE.Object3D;
         this._scene.add(this._cameraGroup);
@@ -189,6 +212,13 @@ class Scene {
         }
     }
 
+    public setPaintConnectedComponents(v: boolean): void {
+        if (this._paintConnectedComponents !== v) {
+            this._paintConnectedComponents = v;
+            this.reset(this._reference);
+        }
+    }
+
     private _fetchAtomic(node: Node): void {
         let url: string = `https://s3-eu-west-1.amazonaws.com/mapillary.private.images/${node.key}/sfm/v1.0/atomic_reconstruction.json`;
 
@@ -213,8 +243,8 @@ class Scene {
         let matParams: THREE.PointsMaterialParameters = {};
         matParams.size = 1;
         let material: THREE.PointsMaterial = new THREE.PointsMaterial({
-            size: 1,
-            sizeAttenuation: false,
+            size: 0.2,
+            sizeAttenuation: true,
             vertexColors: THREE.VertexColors,
         });
 
@@ -281,7 +311,7 @@ class Scene {
             node.computedLatLon.lat, node.computedLatLon.lon, node.alt,
             this._reference.lat, this._reference.lon, this._reference.alt);
         let gpsCenter: number[] = this._geoCoords.geodeticToEnu(
-            node.originalLatLon.lat, node.originalLatLon.lon, 2,
+            node.originalLatLon.lat, node.originalLatLon.lon, node.originalAlt,
             this._reference.lat, this._reference.lon, this._reference.alt);
 
         let geometry: THREE.Geometry = new THREE.Geometry();
@@ -293,29 +323,14 @@ class Scene {
     }
 
     private _tileObject(reference: ILatLonAlt): THREE.Object3D {
-        function lon2tile(lon: number, zoom: number): number {
-            return Math.floor((lon + 180) / 360 * Math.pow(2, zoom));
-        }
-        function lat2tile(lat: number, zoom: number): number {
-            return Math.floor((1 - Math.log(Math.tan(lat * Math.PI / 180) +
-                               1 / Math.cos(lat * Math.PI / 180)) / Math.PI) / 2 * Math.pow(2, zoom));
-        }
-        function tile2lon(x: number, z: number): number {
-            return x / Math.pow(2, z) * 360 - 180;
-        }
-        function tile2lat(y: number, z: number): number {
-            let n: number = Math.PI - 2 * Math.PI * y / Math.pow(2, z);
-            return 180 / Math.PI * Math.atan(0.5 * (Math.exp(n) - Math.exp(-n)));
-        }
-
         let z: number = 17;
-        let x: number = lon2tile(reference.lon, z);
-        let y: number = lat2tile(reference.lat, z);
+        let x: number = OsmMath.lon2tile(reference.lon, z);
+        let y: number = OsmMath.lat2tile(reference.lat, z);
 
-        let minLon: number = tile2lon(x, z);
-        let maxLon: number = tile2lon(x + 1, z);
-        let minLat: number = tile2lat(y + 1, z);
-        let maxLat: number = tile2lat(y, z);
+        let minLon: number = OsmMath.tile2lon(x, z);
+        let maxLon: number = OsmMath.tile2lon(x + 1, z);
+        let minLat: number = OsmMath.tile2lat(y + 1, z);
+        let maxLat: number = OsmMath.tile2lat(y, z);
 
         let topLeft: number[] = this._geoCoords.geodeticToEnu(
             maxLat, minLon, -2, reference.lat, reference.lon, reference.alt);
@@ -336,6 +351,106 @@ class Scene {
         mesh.position.y = (topLeft[1] + bottomRight[1]) / 2;
         mesh.position.z = (topLeft[2] + bottomRight[2]) / 2;
         return mesh;
+    }
+
+    private _loadTerrain(parent: THREE.Object3D, reference: ILatLonAlt): void {
+        let z: number = 15;
+        let x: number = OsmMath.lon2tile(reference.lon, z);
+        let y: number = OsmMath.lat2tile(reference.lat, z);
+
+        let minLon: number = OsmMath.tile2lon(x, z);
+        let maxLon: number = OsmMath.tile2lon(x + 1, z);
+        let minLat: number = OsmMath.tile2lat(y + 1, z);
+        let maxLat: number = OsmMath.tile2lat(y, z);
+
+        let topLeft: number[] = this._geoCoords.geodeticToEnu(
+            maxLat, minLon, 0, reference.lat, reference.lon, reference.alt);
+        let bottomRight: number[] = this._geoCoords.geodeticToEnu(
+            minLat, maxLon, 0, reference.lat, reference.lon, reference.alt);
+
+        let demURL: string = "https://elevation-tiles-prod.s3.amazonaws.com/terrarium/{z}/{x}/{y}.png?SpatialDataComponent";
+        let url: string = demURL.replace(/{z}/, `${z}`).replace(/{x}/, `${x}`).replace(/{y}/, `${y}`);
+
+        let imageObj: HTMLImageElement = new Image();
+        imageObj.crossOrigin = "Anonymous";
+        imageObj.onload = (): any => {
+            let width: number = imageObj.width;
+            let height: number = imageObj.height;
+
+            let canvas: HTMLCanvasElement = document.createElement("canvas");
+            canvas.width = width;
+            canvas.height = height;
+            let context: CanvasRenderingContext2D = canvas.getContext("2d");
+            context.drawImage(imageObj, 0, 0);
+            let imageData: ImageData = context.getImageData(0, 0, width, height);
+
+            let mesh: THREE.Object3D = this._terrainMesh(imageData, width, height, topLeft, bottomRight);
+            parent.add(mesh);
+        };
+        imageObj.src = url;
+    }
+
+    private  _terrainMesh(imageData: ImageData,
+                          width: number,
+                          height: number,
+                          topLeft: number[],
+                          bottomRight: number[]): THREE.Object3D {
+
+        let xs: Float32Array = new Float32Array(width);
+        let ys: Float32Array = new Float32Array(height);
+        let zs: Float32Array = new Float32Array(width * height);
+        for (let i: number = 0; i < width * height; ++i) {
+            let red: number = imageData.data[4 * i + 0];
+            let green: number = imageData.data[4 * i + 1];
+            let blue: number = imageData.data[4 * i + 2];
+            let altitude: number = (red * 256.0 + green + blue / 256.0) - 32768.0;
+            zs[i] = altitude + topLeft[2];
+        }
+
+        for (let i: number = 0; i < height; ++i) {
+            ys[i] = topLeft[1] + (i + 0.5) * (bottomRight[1] - topLeft[1]) / height;
+        }
+        for (let i: number = 0; i < width; ++i) {
+            xs[i] = topLeft[0] + (i + 0.5) * (bottomRight[0] - topLeft[0]) / width;
+        }
+
+        let n: number = Math.min(width, height) - 1;
+        let vertices: Float32Array = new Float32Array(n * n * 2 * 3 * 3);
+
+        for (let i: number = 0; i < n; ++i) {
+            for (let j: number = 0; j < n; ++j) {
+                let offset: number = 2 * 3 * 3 * (n * i + j);
+
+                vertices[offset++] = xs[j];
+                vertices[offset++] = ys[i];
+                vertices[offset++] = zs[i * width + j];
+
+                vertices[offset++] = xs[j];
+                vertices[offset++] = ys[i + 1];
+                vertices[offset++] = zs[(i + 1) * width + j];
+
+                vertices[offset++] = xs[j + 1];
+                vertices[offset++] = ys[i];
+                vertices[offset++] = zs[i * width + j + 1];
+
+                vertices[offset++] = xs[j + 1];
+                vertices[offset++] = ys[i];
+                vertices[offset++] = zs[i * width + j + 1];
+
+                vertices[offset++] = xs[j];
+                vertices[offset++] = ys[i + 1];
+                vertices[offset++] = zs[(i + 1) * width + j];
+
+                vertices[offset++] = xs[j + 1];
+                vertices[offset++] = ys[i + 1];
+                vertices[offset++] = zs[(i + 1) * width + j + 1];
+            }
+        }
+
+        let geometry: THREE.BufferGeometry = new THREE.BufferGeometry();
+        geometry.addAttribute("position", new THREE.BufferAttribute(vertices, 3));
+        let material: THREE.MeshBasicMaterial = new THREE.MeshBasicMaterial({color: 0xff0000, wireframe: true});
+        return new THREE.Mesh(geometry, material);
     }
 
     private _gridObject(): THREE.Object3D {
