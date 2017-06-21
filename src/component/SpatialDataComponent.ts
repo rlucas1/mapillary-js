@@ -234,9 +234,19 @@ class Scene {
         xmlHTTP.send();
     }
 
+    private _usePoints(transform: Transform, reconstruction: any): boolean {
+        return Object.keys(reconstruction.points).length &&
+            transform.scale > 1e-2 &&
+            transform.scale < 50;
+    }
+
     private _loadPoints(node: Node, reconstruction: any): void {
         let translation: number[] = this._nodeToTranslation(node);
         let transform: Transform = new Transform(node, null, translation);
+
+        if (!this._usePoints(transform, reconstruction)) {
+            return;
+        }
 
         let isrt: THREE.Matrix4 = new THREE.Matrix4().getInverse(transform.srt);
 
