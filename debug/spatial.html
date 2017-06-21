@@ -18,12 +18,13 @@
     <button onclick="moveToKey()">Move to Key</button>
     <button onclick="fly()">Fly</button><button onclick="walk()">Walk</button>
     <br>
-    <button onclick="showCameras(true)">Show Cameras</button><button onclick="showCameras(false)">Hide Cameras</button>
-    <button onclick="showTile(true)">Show Tile</button><button onclick="showTile(false)">Hide Tile</button>
-    <button onclick="showGPS(true)">Show GPS</button><button onclick="showGPS(false)">Hide GPS</button>
-    <button onclick="showPoints(true)">Show Points</button><button onclick="showPoints(false)">Hide Points</button>
+    <button onclick="showImages(true)">Show Images</button><button onclick="showImages(false)">Hide Images</button><br>
+    <button onclick="showCameras(true)">Show Cameras</button><button onclick="showCameras(false)">Hide Cameras</button><br>
+    <button onclick="showGPS(true)">Show GPS</button><button onclick="showGPS(false)">Hide GPS</button><br>
+    <button onclick="showPoints(true)">Show Points</button><button onclick="showPoints(false)">Hide Points</button><br>
+    <button onclick="showTile(true)">Show Tile</button><button onclick="showTile(false)">Hide Tile</button><br>
+    <button onclick="showTerrain(true)">Show Terrain</button><button onclick="showTerrain(false)">Hide Terrain</button><br>
     <button onclick="showGrid(true)">Show Grid</button><button onclick="showGrid(false)">Hide Grid</button>
-    <button onclick="showImages(true)">Show Images</button><button onclick="showImages(false)">Hide Images</button>
 <!--     <button onclick="paintConnectedComponents(true)">Show CC</button><button onclick="paintConnectedComponents(false)">Hide CC</button>
  -->
 
@@ -67,6 +68,9 @@
         }
         function showTile(v) {
             spatial.scene.setShowTile(v);
+        }
+        function showTerrain(v) {
+            spatial.scene.setShowTerrain(v);
         }
         function showGPS(v) {
             spatial.scene.setShowGPS(v);
