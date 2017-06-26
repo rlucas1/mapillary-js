@@ -164,7 +164,7 @@ class Scene {
 
     public updateCameras(nodes: Node[]): void {
         for (let node of nodes) {
-            if (!(node.key in this._cameras)) {
+            if (node.computedLatLon && !(node.key in this._cameras)) {
                 let camera: THREE.LineSegments = this._cameraObject(node);
                 this._cameras[node.key] = camera;
                 this._cameraGroup.add(camera);
