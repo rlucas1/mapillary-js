@@ -194,7 +194,7 @@ export class MouseComponent extends Component<IMouseConfiguration> {
         return { doubleClickZoom: true, dragPan: true, scrollZoom: true, touchZoom: true };
     }
 
-    protected _orbitDeltaFromMovement(events: [MouseEvent, MouseEvent], camera: RenderCamera): IRotation {
+    private _orbitDeltaFromMovement(events: [MouseEvent, MouseEvent], camera: RenderCamera): IRotation {
         let element: HTMLElement = this._container.element;
         let size: number = Math.max(element.offsetWidth, element.offsetHeight);
 
@@ -208,15 +208,15 @@ export class MouseComponent extends Component<IMouseConfiguration> {
             phi: -Math.PI * movementX / size,
             theta: -Math.PI * movementY / size,
         };
-    };
+    }
 
-    protected _processFlyMovement(events: [MouseEvent, MouseEvent], camera: RenderCamera): void {
+    private _processFlyMovement(events: [MouseEvent, MouseEvent], camera: RenderCamera): void {
         const event: MouseEvent = events[1];
         if (event.shiftKey) {
             this._navigator.stateService.truck(this._truckDeltaFromMovement(events, camera));
         } else {
             if (event.ctrlKey || event.metaKey) {
-                this._navigator.stateService.orbit(this._rotationDeltaFromMovement(events, camera));
+                this._navigator.stateService.orbit(this._orbitDeltaFromMovement(events, camera));
             } else {
                 this._navigator.stateService.rotate(this._rotationDeltaFromMovement(events, camera));
             }
@@ -252,7 +252,7 @@ export class MouseComponent extends Component<IMouseConfiguration> {
         return { phi: phi, theta: theta };
     }
 
-    protected _truckDeltaFromMovement(events: [MouseEvent, MouseEvent], camera: RenderCamera): number[] {
+    private _truckDeltaFromMovement(events: [MouseEvent, MouseEvent], camera: RenderCamera): number[] {
         let element: HTMLElement = this._container.element;
         let size: number = Math.max(element.offsetWidth, element.offsetHeight);
 
@@ -264,7 +264,7 @@ export class MouseComponent extends Component<IMouseConfiguration> {
 
         return [movementX / size,
                 movementY / size];
-    };
+    }
 }
 
 ComponentService.register(MouseComponent);
