@@ -145,15 +145,25 @@ export class MouseComponent extends Component<IMouseConfiguration> {
             .publishReplay(1)
             .refCount();
 
+        let mouseDrag$: Observable<[MouseEvent, MouseEvent]> = Observable
+            .merge(
+                this._container.mouseService.filtered$(this._name, this._container.mouseService.mouseDragStart$),
+                this._container.mouseService.filtered$(this._name, this._container.mouseService.mouseDrag$),
+                this._container.mouseService.filtered$(this._name, this._container.mouseService.mouseDragEnd$)
+                    .map((e: MouseEvent): MouseEvent => { return null; }))
+            .pairwise()
+            .filter(
+                (pair: [MouseEvent, MouseEvent]): boolean => {
+                    return pair[0] != null && pair[1] != null;
+                });
+
         this._flyMovementSubscription = flying$
             .switchMap(
-                (flying: boolean): Observable<MouseEvent> => {
+                (flying: boolean): Observable<[MouseEvent, MouseEvent]> => {
                     return flying ?
-                        this._container.mouseService
-                            .filtered$(this._name, this._container.mouseService.mouseDrag$) :
-                        Observable.empty<MouseEvent>();
+                        mouseDrag$ :
+                        Observable.empty<[MouseEvent, MouseEvent]>();
                 })
-            .pairwise()
             .withLatestFrom(this._container.renderService.renderCamera$)
             .subscribe(
                 ([events, camera]: [[MouseEvent, MouseEvent], RenderCamera]): void => {
