@@ -370,6 +370,7 @@ class Scene {
         let geometry: THREE.Geometry = new THREE.PlaneGeometry(width, height);
 
         let textureLoader: THREE.TextureLoader = new THREE.TextureLoader();
+        textureLoader.crossOrigin = "Anonymous";
         let url: string = this._tileURL.replace(/{z}/, `${z}`).replace(/{x}/, `${x}`).replace(/{y}/, `${y}`);
         let texture: THREE.Texture = textureLoader.load(url);
 
@@ -490,7 +491,7 @@ class Scene {
                 new THREE.Vector3(scale * (i - N), scale * (-N), 0),
                 new THREE.Vector3(scale * (i - N), scale * ( N), 0),
                 new THREE.Vector3(scale * (-N), scale * (i - N), 0),
-                new THREE.Vector3(scale * ( N), scale * (i - N), 0)
+                new THREE.Vector3(scale * ( N), scale * (i - N), 0),
             );
         }
         let material: THREE.LineBasicMaterial = new THREE.LineBasicMaterial({color: 0x555555});

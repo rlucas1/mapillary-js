@@ -1,4 +1,3 @@
-import {Observable} from "rxjs/Observable";
 import {Subscription} from "rxjs/Subscription";
 
 import "rxjs/add/observable/merge";
@@ -22,8 +21,6 @@ import {
     ViewportCoords,
     Spatial,
 } from "../../Geo";
-import {RenderCamera} from "../../Render";
-import {IFrame} from "../../State";
 import {
     Container,
     Navigator,
@@ -133,8 +130,6 @@ export class MouseComponent extends Component<IMouseConfiguration> {
                     } else {
                         this._touchZoomHandler.disable();
                     }
-
-                    this._flyHandler.enable();
                 });
 
         this._container.mouseService.claimMouse(this._name, 0);
