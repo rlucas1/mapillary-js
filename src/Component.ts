@@ -25,6 +25,7 @@ export * from "./component/mouse/HandlerTypes";
 export {BounceHandler} from "./component/mouse/BounceHandler";
 export {DragPanHandler} from "./component/mouse/DragPanHandler";
 export {DoubleClickZoomHandler} from "./component/mouse/DoubleClickZoomHandler";
+export {FlyHandler} from "./component/mouse/FlyHandler";
 export {ScrollZoomHandler} from "./component/mouse/ScrollZoomHandler";
 export {TouchZoomHandler} from "./component/mouse/TouchZoomHandler";
 export {Popup} from "./component/popup/popup/Popup";
