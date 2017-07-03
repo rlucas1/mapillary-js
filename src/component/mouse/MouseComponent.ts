@@ -23,11 +23,7 @@ import {
     Spatial,
 } from "../../Geo";
 import {RenderCamera} from "../../Render";
-import {
-    IFrame,
-    IRotation,
-    State,
-} from "../../State";
+import {IFrame} from "../../State";
 import {
     Container,
     Navigator,
@@ -137,6 +133,8 @@ export class MouseComponent extends Component<IMouseConfiguration> {
                     } else {
                         this._touchZoomHandler.disable();
                     }
+
+                    this._flyHandler.enable();
                 });
 
         this._container.mouseService.claimMouse(this._name, 0);
