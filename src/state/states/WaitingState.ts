@@ -1,7 +1,6 @@
 import {Node} from "../../Graph";
 import {
     IState,
-    IRotation,
     FlyingState,
     StateBase,
     TraversingState,

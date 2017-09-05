@@ -2,18 +2,36 @@ import {Observable} from "rxjs/Observable";
 import {Subscription} from "rxjs/Subscription";
 
 import {
+    Component,
     IMouseConfiguration,
-    MouseHandlerBase,
+    HandlerBase,
 } from "../../Component";
+import {ViewportCoords} from "../../Geo";
 import {RenderCamera} from "../../Render";
 import {
     IRotation,
     State,
 } from "../../State";
+import {
+    Container,
+    Navigator,
+} from "../../Viewer";
 
-export class FlyHandler extends MouseHandlerBase<IMouseConfiguration> {
+export class FlyHandler extends HandlerBase<IMouseConfiguration> {
+    private _viewportCoords: ViewportCoords;
+
     private _flyMovementSubscription: Subscription;
     private _flyMouseWheelSubscription: Subscription;
+
+    constructor(
+        component: Component<IMouseConfiguration>,
+        container: Container,
+        navigator: Navigator,
+        viewportCoords: ViewportCoords) {
+        super(component, container, navigator);
+
+        this._viewportCoords = viewportCoords;
+    }
 
     protected _enable(): void {
         const flying$: Observable<boolean> = this._navigator.stateService.state$
