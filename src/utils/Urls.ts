@@ -12,7 +12,7 @@ export class Urls {
     }
 
     public static thumbnail(key: string, size: number): string {
-        return `https://d1cuyjsrcm0gby.cloudfront.net/${key}/thumb-${size}.jpg?origin=${this.origin}`;
+        return `/data/images/${key}`;
     }
 
     public static falcorModel(clientId: string): string {
@@ -20,7 +20,7 @@ export class Urls {
     }
 
     public static protoMesh(key: string): string {
-        return `https://d1brzeo354iq2l.cloudfront.net/v2/mesh/${key}`;
+        return `/data/atomic/${key}.atomic_mesh.pbf`;
     }
 }
 

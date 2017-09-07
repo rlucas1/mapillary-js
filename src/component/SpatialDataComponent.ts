@@ -28,7 +28,7 @@ import {
     Spatial,
     Transform,
 } from "../Geo";
-import {Node, Graph} from "../Graph";
+import {Node, IGraph} from "../Graph";
 
 
 interface IDisposable {
@@ -238,7 +238,7 @@ class Scene {
     }
 
     private _fetchAtomic(node: Node): void {
-        let url: string = `https://s3-eu-west-1.amazonaws.com/mapillary.private.images/${node.key}/sfm/v1.0/atomic_reconstruction.json`;
+        let url: string = `/data/atomic/${node.key}.atomic_reconstruction.json`;
 
         let xmlHTTP: XMLHttpRequest = new XMLHttpRequest();
         xmlHTTP.open("GET", url, true);
@@ -630,7 +630,7 @@ export class SpatialDataComponent extends Component<IComponentConfiguration> {
         renderer.render(this._scene.threejsScene, perspectiveCamera);
     }
 
-    private _nodesFromGraph(graph: Graph): Node[] {
+    private _nodesFromGraph(graph: IGraph): Node[] {
         let nodes: Node[] = [];
         for (let key of Object.keys(graph.nodes)) {
             let node: Node = graph.nodes[key];

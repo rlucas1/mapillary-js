@@ -15,7 +15,7 @@ import "rxjs/add/operator/publishReplay";
 
 import {
     FilterExpression,
-    Graph,
+    IGraph,
     ImageLoadingService,
     Node,
     Sequence,
@@ -28,11 +28,11 @@ import {
  * @classdesc Represents a service for graph operations.
  */
 export class GraphService {
-    private _graph$: Observable<Graph>;
+    private _graph$: Observable<IGraph>;
 
     private _imageLoadingService: ImageLoadingService;
 
-    private _firstGraphSubjects$: Subject<Graph>[];
+    private _firstGraphSubjects$: Subject<IGraph>[];
 
     private _initializeCacheSubscriptions: Subscription[];
     private _sequenceSubscriptions: Subscription[];
@@ -41,12 +41,12 @@ export class GraphService {
     /**
      * Create a new graph service instance.
      *
-     * @param {Graph} graph - Graph instance to be operated on.
+     * @param {IGraph} graph - IGraph instance to be operated on.
      */
-    constructor(graph: Graph, imageLoadingService: ImageLoadingService) {
+    constructor(graph: IGraph, imageLoadingService: ImageLoadingService) {
         this._graph$ = Observable
             .of(graph)
-            .concat(graph.changed$)
+            .concat<IGraph, IGraph>(graph.changed$)
             .publishReplay(1)
             .refCount();
 
@@ -61,7 +61,7 @@ export class GraphService {
         this._spatialSubscriptions = [];
     }
 
-    public get graph$(): Observable<Graph> {
+    public get graph$(): Observable<IGraph> {
         return this._graph$;
     }
 
@@ -84,17 +84,17 @@ export class GraphService {
      * @throws {Error} Propagates any IO node caching errors to the caller.
      */
     public cacheNode$(key: string): Observable<Node> {
-        let firstGraphSubject$: Subject<Graph> = new Subject<Graph>();
+        let firstGraphSubject$: Subject<IGraph> = new Subject<IGraph>();
 
         this._firstGraphSubjects$.push(firstGraphSubject$);
 
-        let firstGraph$: Observable<Graph> = firstGraphSubject$
+        let firstGraph$: Observable<IGraph> = firstGraphSubject$
             .publishReplay(1)
             .refCount();
 
         let node$: Observable<Node> = firstGraph$
             .map(
-                (graph: Graph): Node => {
+                (graph: IGraph): Node => {
                     return graph.getNode(key);
                 })
             .mergeMap(
@@ -117,7 +117,7 @@ export class GraphService {
         let initializeCacheSubscription: Subscription = this._graph$
             .first()
             .mergeMap(
-                (graph: Graph): Observable<Graph> => {
+                (graph: IGraph): Observable<IGraph> => {
                     if (graph.isCachingFull(key) || !graph.hasNode(key)) {
                         return graph.cacheFull$(key);
                     }
@@ -126,10 +126,10 @@ export class GraphService {
                         return graph.cacheFill$(key);
                     }
 
-                    return Observable.of<Graph>(graph);
+                    return Observable.of<IGraph>(graph);
                 })
             .do(
-                (graph: Graph): void => {
+                (graph: IGraph): void => {
                     if (!graph.hasInitializedCache(key)) {
                         graph.initializeCache(key);
                     }
@@ -144,7 +144,7 @@ export class GraphService {
                     this._removeFromArray(firstGraphSubject$, this._firstGraphSubjects$);
                 })
             .subscribe(
-                (graph: Graph): void => {
+                (graph: IGraph): void => {
                     firstGraphSubject$.next(graph);
                     firstGraphSubject$.complete();
                 },
@@ -158,15 +158,15 @@ export class GraphService {
 
         let sequenceSubscription: Subscription = firstGraph$
             .mergeMap(
-                (graph: Graph): Observable<Graph> => {
+                (graph: IGraph): Observable<IGraph> => {
                     if (graph.isCachingNodeSequence(key) || !graph.hasNodeSequence(key)) {
                         return graph.cacheNodeSequence$(key);
                     }
 
-                    return Observable.of<Graph>(graph);
+                    return Observable.of<IGraph>(graph);
                 })
             .do(
-                (graph: Graph): void => {
+                (graph: IGraph): void => {
                     if (!graph.getNode(key).sequenceEdges.cached) {
                         graph.cacheSequenceEdges(key);
                     }
@@ -180,7 +180,7 @@ export class GraphService {
                     this._removeFromArray(sequenceSubscription, this._sequenceSubscriptions);
                 })
             .subscribe(
-                (graph: Graph): void => { return; },
+                (graph: IGraph): void => { return; },
                 (error: Error): void => {
                     console.error(`Failed to cache sequence edges (${key}).`, error);
                 });
@@ -191,61 +191,61 @@ export class GraphService {
 
         let spatialSubscription: Subscription = firstGraph$
             .expand(
-                (graph: Graph): Observable<Graph> => {
+                (graph: IGraph): Observable<IGraph> => {
                     if (graph.hasTiles(key)) {
-                        return Observable.empty<Graph>();
+                        return Observable.empty<IGraph>();
                     }
 
                     return Observable
-                        .from<Observable<Graph>>(graph.cacheTiles$(key))
+                        .from<Observable<IGraph>>(graph.cacheTiles$(key))
                         .mergeMap(
-                            (graph$: Observable<Graph>): Observable<Graph> => {
+                            (graph$: Observable<IGraph>): Observable<IGraph> => {
                                 return graph$
                                     .mergeMap(
-                                        (g: Graph): Observable<Graph> => {
+                                        (g: IGraph): Observable<IGraph> => {
                                             if (g.isCachingTiles(key)) {
-                                                return Observable.empty<Graph>();
+                                                return Observable.empty<IGraph>();
                                             }
 
-                                            return Observable.of<Graph>(g);
+                                            return Observable.of<IGraph>(g);
                                         })
                                     .catch(
-                                        (error: Error, caught$: Observable<Graph>): Observable<Graph> => {
+                                        (error: Error, caught$: Observable<IGraph>): Observable<IGraph> => {
                                             console.error(`Failed to cache tile data (${key}).`, error);
 
-                                            return Observable.empty<Graph>();
+                                            return Observable.empty<IGraph>();
                                         });
                             });
                 })
             .last()
             .mergeMap(
-                (graph: Graph): Observable<Graph> => {
+                (graph: IGraph): Observable<IGraph> => {
                     if (graph.hasSpatialArea(key)) {
-                        return Observable.of<Graph>(graph);
+                        return Observable.of<IGraph>(graph);
                     }
 
                     return Observable
-                        .from<Observable<Graph>>(graph.cacheSpatialArea$(key))
+                        .from<Observable<IGraph>>(graph.cacheSpatialArea$(key))
                         .mergeMap(
-                            (graph$: Observable<Graph>): Observable<Graph> => {
+                            (graph$: Observable<IGraph>): Observable<IGraph> => {
                                 return graph$
                                     .catch(
-                                        (error: Error, caught$: Observable<Graph>): Observable<Graph> => {
+                                        (error: Error, caught$: Observable<IGraph>): Observable<IGraph> => {
                                             console.error(`Failed to cache spatial nodes (${key}).`, error);
 
-                                            return Observable.empty<Graph>();
+                                            return Observable.empty<IGraph>();
                                         });
                             });
                 })
             .last()
             .mergeMap(
-                (graph: Graph): Observable<Graph> => {
+                (graph: IGraph): Observable<IGraph> => {
                     return graph.hasNodeSequence(key) ?
-                        Observable.of<Graph>(graph) :
+                        Observable.of<IGraph>(graph) :
                         graph.cacheNodeSequence$(key);
                 })
             .do(
-                (graph: Graph): void => {
+                (graph: IGraph): void => {
                     if (!graph.getNode(key).spatialEdges.cached) {
                         graph.cacheSpatialEdges(key);
                     }
@@ -259,7 +259,7 @@ export class GraphService {
                     this._removeFromArray(spatialSubscription, this._spatialSubscriptions);
                 })
             .subscribe(
-                (graph: Graph): void => { return; },
+                (graph: IGraph): void => { return; },
                 (error: Error): void => {
                     console.error(`Failed to cache spatial edges (${key}).`, error);
                 });
@@ -287,15 +287,15 @@ export class GraphService {
         return this._graph$
             .first()
             .mergeMap(
-                (graph: Graph): Observable<Graph> => {
+                (graph: IGraph): Observable<IGraph> => {
                     if (graph.isCachingSequence(sequenceKey) || !graph.hasSequence(sequenceKey)) {
                         return graph.cacheSequence$(sequenceKey);
                     }
 
-                    return Observable.of<Graph>(graph);
+                    return Observable.of<IGraph>(graph);
                 })
             .map(
-                (graph: Graph): Sequence => {
+                (graph: IGraph): Sequence => {
                     return graph.getSequence(sequenceKey);
                 });
     }
@@ -306,16 +306,16 @@ export class GraphService {
      * @description Resets the spatial edges of all cached nodes.
      *
      * @param {FilterExpression} filter - Filter expression to be applied.
-     * @return {Observable<Graph>} Observable emitting a single item,
+     * @return {Observable<IGraph>} Observable emitting a single item,
      * the graph, when the spatial edges have been reset.
      */
-    public setFilter$(filter: FilterExpression): Observable<Graph> {
+    public setFilter$(filter: FilterExpression): Observable<IGraph> {
         this._resetSubscriptions(this._spatialSubscriptions);
 
         return this._graph$
             .first()
             .do(
-                (graph: Graph): void => {
+                (graph: IGraph): void => {
                     graph.resetSpatialEdges();
                     graph.setFilter(filter);
                 });
@@ -331,7 +331,7 @@ export class GraphService {
      * @return {Observable<Node>} Observable emitting a single item,
      * the graph, when it has been reset.
      */
-    public reset$(keepKeys: string[]): Observable<Graph> {
+    public reset$(keepKeys: string[]): Observable<IGraph> {
         this._abortSubjects(this._firstGraphSubjects$);
         this._resetSubscriptions(this._initializeCacheSubscriptions);
         this._resetSubscriptions(this._sequenceSubscriptions);
@@ -340,7 +340,7 @@ export class GraphService {
         return this._graph$
             .first()
             .do(
-                (graph: Graph): void => {
+                (graph: IGraph): void => {
                     graph.reset(keepKeys);
                 });
     }
@@ -353,14 +353,14 @@ export class GraphService {
      * related to those nodes.
      *
      * @param {Array<string>} keepKeys - Keys of nodes to keep in graph.
-     * @return {Observable<Graph>} Observable emitting a single item,
+     * @return {Observable<IGraph>} Observable emitting a single item,
      * the graph, when the graph has been uncached.
      */
-    public uncache$(keepKeys: string[]): Observable<Graph> {
+    public uncache$(keepKeys: string[]): Observable<IGraph> {
         return this._graph$
             .first()
             .do(
-                (graph: Graph): void => {
+                (graph: IGraph): void => {
                     graph.uncache(keepKeys);
                 });
     }

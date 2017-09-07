@@ -19,10 +19,11 @@ import {
 } from "../API";
 import {
     FilterExpression,
-    Graph,
+    IGraph,
     GraphService,
     IEdgeStatus,
     ImageLoadingService,
+    LocalGraph,
     Node,
 } from "../Graph";
 import {EdgeDirection} from "../Edge";
@@ -68,7 +69,7 @@ export class Navigator {
 
         this._graphService = graphService != null ?
             graphService :
-            new GraphService(new Graph(this.apiV3), this._imageLoadingService);
+            new GraphService(new LocalGraph(), this._imageLoadingService);
 
         this._loadingService = loadingService != null ? loadingService : new LoadingService();
         this._loadingName = "navigator";
@@ -196,7 +197,7 @@ export class Navigator {
                                 (keys: string[]): Observable<Node> => {
                                     return this._graphService.setFilter$(filter)
                                         .mergeMap(
-                                            (graph: Graph): Observable<Node> => {
+                                            (graph: IGraph): Observable<Node> => {
                                                 return this._cacheKeys$(keys);
                                             });
                                 })
@@ -210,14 +211,14 @@ export class Navigator {
                                 if (requestedKey != null) {
                                     return this._graphService.setFilter$(filter)
                                         .mergeMap(
-                                            (graph: Graph): Observable<Node> => {
+                                            (graph: IGraph): Observable<Node> => {
                                                 return this._graphService.cacheNode$(requestedKey);
                                             });
                                 }
 
                                 return this._graphService.setFilter$(filter)
                                     .map(
-                                        (graph: Graph): Node => {
+                                        (graph: IGraph): Node => {
                                             return undefined;
                                         });
                             });
@@ -244,7 +245,7 @@ export class Navigator {
                     return key == null ?
                         this._graphService.reset$([])
                             .map(
-                                (graph: Graph): void => {
+                                (graph: IGraph): void => {
                                     return undefined;
                                 }) :
                         this._trajectoryKeys$()
@@ -252,7 +253,7 @@ export class Navigator {
                                 (keys: string[]): Observable<Node> => {
                                     return this._graphService.reset$(keys)
                                         .mergeMap(
-                                            (graph: Graph): Observable<Node> => {
+                                            (graph: IGraph): Observable<Node> => {
                                                 return this._cacheKeys$(keys);
                                             });
                                 })

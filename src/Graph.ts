@@ -12,6 +12,7 @@ export {Graph} from "./graph/Graph";
 export {GraphCalculator} from "./graph/GraphCalculator";
 export {GraphService} from "./graph/GraphService";
 export {ImageLoadingService} from "./graph/ImageLoadingService";
+export {LocalGraph} from "./graph/LocalGraph";
 export {MeshReader} from "./graph/MeshReader";
 export {Node} from "./graph/Node";
 export {NodeCache} from "./graph/NodeCache";

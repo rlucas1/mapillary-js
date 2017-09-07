@@ -31,6 +31,7 @@ import {
     FilterCreator,
     FilterExpression,
     FilterFunction,
+    IGraph,
     IGraphConfiguration,
     Node,
     NodeCache,
@@ -75,7 +76,7 @@ type SequenceAccess = {
  *
  * @classdesc Represents a graph of nodes with edges.
  */
-export class Graph {
+export class Graph implements IGraph {
     private _apiV3: APIv3;
 
     /**

@@ -8,7 +8,7 @@ import "rxjs/add/operator/map";
 import "rxjs/add/operator/switchMap";
 
 import {
-    Graph,
+    IGraph,
     GraphService,
     Node,
 } from "../Graph";
@@ -57,7 +57,7 @@ export class CacheService {
                 })
             .bufferCount(1, 5)
             .switchMap(
-                (keepKeysBuffer: string[][]): Observable<Graph> => {
+                (keepKeysBuffer: string[][]): Observable<IGraph> => {
                     let keepKeys: string[] = keepKeysBuffer[0];
 
                     return this._graphService.uncache$(keepKeys);
