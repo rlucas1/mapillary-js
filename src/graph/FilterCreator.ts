@@ -74,18 +74,24 @@ export class FilterCreator {
     }
 
     private _compileComparisonOp<T>(operator: string, property: string, value: T, checkType: boolean): string {
-        const left: string = this._compilePropertyReference(property);
+        const tree: string[] = this._createPropertyTree(property);
+        const left: string = this._compilePropertyReference(tree);
         const right: string = JSON.stringify(value);
 
-        return (checkType ? "typeof " + left + "===typeof " + right + "&&" : "") + left + operator + right;
+        const op: string = (checkType ? "typeof " + left + "===typeof " + right + "&&" : "") + left + operator + right;
+
+        return this._compileWithExists(tree, op);
     }
 
     private _compileInOp<T>(property: string, values: T[]): string {
         const compare: (a: T, b: T) => number = this._compare;
         const left: string = JSON.stringify(values.sort(compare));
-        const right: string = this._compilePropertyReference(property);
+        const tree: string[] = this._createPropertyTree(property);
+        const right: string = this._compilePropertyReference(tree);
 
-        return left + ".indexOf(" + right + ")!==-1";
+        const op: string = left + ".indexOf(" + right + ")!==-1";
+
+        return this._compileWithExists(tree, op);
     }
 
     private _compileLogicalOp(filters: FilterOperation[], operator: string): string {
@@ -98,8 +104,31 @@ export class FilterCreator {
         return "!(" + expression + ")";
     }
 
-    private _compilePropertyReference(property: string): string {
-        return "node[" + JSON.stringify(property) + "]";
+    private _compilePropertyExistsOp(tree: string[]): string {
+        let last: string = "";
+        let exists: string[] = [];
+        for (const property of tree.slice(0, tree.length - 1)) {
+            exists.push(property + "in node" + last);
+            last += "[" + property + "]";
+        }
+
+        return exists.join("&&");
+    }
+
+    private _compilePropertyReference(tree: string[]): string {
+        return "node[" + tree.join("][") + "]";
+    }
+
+    private _compileWithExists(tree: string[], op: string): string {
+        const exists: string = this._compilePropertyExistsOp(tree);
+
+        return (!!exists ? exists + "&&" : "") + op;
+    }
+
+    private _createPropertyTree(property: string): string[] {
+        return property
+            .split(".")
+            .map((p: string): string => { return JSON.stringify(p); });
     }
 }
 
