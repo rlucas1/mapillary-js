@@ -29,7 +29,6 @@ import {
 import {GraphMapillaryError} from "../Error";
 import {
     FilterCreator,
-    FilterExpression,
     FilterFunction,
     IGraphConfiguration,
     Node,
@@ -37,6 +36,7 @@ import {
     Sequence,
     GraphCalculator,
 } from "../Graph";
+import {FilterExpression} from "../Utils";
 
 type NodeIndexItem = {
     lat: number;

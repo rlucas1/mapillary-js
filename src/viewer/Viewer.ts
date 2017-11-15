@@ -6,10 +6,7 @@ import {Observable} from "rxjs/Observable";
 
 import {ILatLon} from "../API";
 import {EdgeDirection} from "../Edge";
-import {
-    FilterExpression,
-    Node,
-} from "../Graph";
+import {Node} from "../Graph";
 import {
     ComponentController,
     Container,
@@ -23,6 +20,7 @@ import {
 } from "../Component";
 import {
     EventEmitter,
+    FilterExpression,
     Settings,
 } from "../Utils";
 import {RenderMode} from "../Render";

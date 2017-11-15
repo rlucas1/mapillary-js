@@ -18,7 +18,6 @@ import {
     IFullNode,
 } from "../API";
 import {
-    FilterExpression,
     Graph,
     GraphService,
     IEdgeStatus,
@@ -30,6 +29,7 @@ import {
     StateService,
     IFrame,
 } from "../State";
+import {FilterExpression} from "../Utils";
 import {
     CacheService,
     LoadingService,

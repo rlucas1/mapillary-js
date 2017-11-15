@@ -14,12 +14,12 @@ import "rxjs/add/operator/mergeMap";
 import "rxjs/add/operator/publishReplay";
 
 import {
-    FilterExpression,
     Graph,
     ImageLoadingService,
     Node,
     Sequence,
 } from "../Graph";
+import {FilterExpression} from "../Utils";
 
 /**
  * @class GraphService

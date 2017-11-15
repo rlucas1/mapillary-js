@@ -1,11 +1,11 @@
+import {Node} from "../Graph";
 import {
     FilterExpression,
     FilterOperation,
     FilterOperator,
     FilterValue,
-    Node,
-} from "../Graph";
-import {Func} from "../Utils";
+    Func,
+} from "../Utils";
 
 export type FilterFunction = Func<Node, boolean>;
 
