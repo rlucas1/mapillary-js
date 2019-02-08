@@ -14,6 +14,7 @@ uniform float scale_y;
 uniform float radial_peak;
 
 varying vec4 vRstq;
+varying vec4 cameraCoords;
 
 void main()
 {
@@ -39,6 +40,11 @@ void main()
     if (u >= 0. && u <= 1. && v >= 0. && v <= 1.) {
         baseColor = texture2D(projectorTex, vec2(u, v));
         baseColor.a = opacity;
+
+        float xx = cameraCoords.x * 5.0;
+        if (xx - floor(xx) < 0.1) {
+            baseColor.r = 1.0;
+        }
     } else {
         baseColor = vec4(0.0, 0.0, 0.0, 0.0);
     }

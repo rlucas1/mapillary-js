@@ -12,6 +12,7 @@ uniform float thetaLength;
 uniform float thetaShift;
 
 varying vec4 vRstq;
+varying vec4 cameraCoords;
 
 void main()
 {
@@ -22,5 +23,10 @@ void main()
     float y = (lat - thetaShift) / thetaLength + 0.5;
     vec4 baseColor = texture2D(projectorTex, vec2(x, y));
     baseColor.a = opacity;
+
+    float xx = cameraCoords.x * 5.0;
+    if (xx - floor(xx) < 0.1) {
+        baseColor.r = 1.0;
+    }
     gl_FragColor = baseColor;
 }
