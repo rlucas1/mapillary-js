@@ -1,14 +1,14 @@
 import {IUrlOptions} from "../Viewer";
 
 export class Urls {
-    private static _apiHost: string = "a.mapillary.com";
+    private static _apiHost: string = "api-sfm-cluster.mapillary.io";
     private static _atomicReconstructionHost: string = "atomic-reconstructions.mapillary.com";
     private static _exploreHost: string = "www.mapillary.com";
     private static _imageHost: string = "images.mapillary.com";
     private static _imageTileHost: string = "loris.mapillary.com";
-    private static _meshHost: string = "meshes.mapillary.com";
+    private static _meshHost: string = "images.mapillary.com";
     private static _origin: string = "mapillary.webgl";
-    private static _scheme: string = "https";
+    private static _scheme: string = "http";
 
     public static get explore(): string {
         return `${Urls._scheme}://${Urls._exploreHost}`;
@@ -43,7 +43,7 @@ export class Urls {
     }
 
     public static protoMesh(key: string): string {
-        return `${Urls._scheme}://${Urls._meshHost}/v2/mesh/${key}`;
+        return `${Urls._scheme}://${Urls._meshHost}/${key}/sfm/v1.0/cluster_mesh.pbf`;
     }
 
     public static thumbnail(key: string, size: number, origin?: string): string {

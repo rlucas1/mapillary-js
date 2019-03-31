@@ -21,12 +21,23 @@
     <button onclick="playRoute()">Play Route</button><button onclick="stopRoute()">Stop Route</button>
     <button onclick="letterbox()">Letterbox</button><button onclick="fill()">Fill</button>
     <button onclick="setFilter()">Filter</button>
+
+    <br>
+    <button onclick="toggleSpatial()">Spatial</button>
+    <button onclick="togglePoints()">Points</button>
+    <button onclick="toggleCameras()">Cameras</button>
+    <button onclick="toggleMergeCC()">MergeCC</button>
+    <button onclick="togglePositions()">Positions</button>
+    <button onclick="toggleTiles()">Tiles</button>
+    <button onclick="toggleImages()">Images</button>
+    <button onclick="toggleControls()">Controls</button>
+
     <script src='dist/mapillary.js'></script>
     <script>
         var viewer = new Mapillary.Viewer(
             "viewer",
             "QjI1NnU0aG5FZFZISE56U3R5aWN4ZzpkYzg0NzE3MDA0YTRhZjlh",
-            "zarcRdNFZwg3FkXNcsFeGw",
+            "w_1Rd3Wka6xz49oCX1lSBQ",
             {
                 component: {
                     cover: false,
@@ -194,6 +205,66 @@
         function stopRoute() {
             viewer.activateComponent("cache");
             route.stop();
+        }
+
+
+        var spatialData = viewer.getComponent("spatialData");
+        var spatialConfig = {
+            earthControls: false,
+            mergeCC: false,
+            cameras: false,
+            images: true,
+            points: true,
+            spatial: false,
+            tiles: false,
+        };
+
+        function toggleTiles() {
+            spatialConfig.tiles = !spatialConfig.tiles;
+            spatialData.configure({ tilesVisible: spatialConfig.tiles });
+        }
+
+        function toggleControls() {
+            spatialConfig.earth = !spatialConfig.earth;
+            spatialData.configure({ earthControls: spatialConfig.earth });
+        }
+
+        function toggleMergeCC() {
+            spatialConfig.mergeCC = !spatialConfig.mergeCC;
+            spatialData.configure({ connectedComponents: spatialConfig.mergeCC });
+        }
+
+        function toggleCameras() {
+            spatialConfig.cameras = !spatialConfig.cameras;
+            spatialData.configure({ camerasVisible: spatialConfig.cameras });
+        }
+
+        function togglePoints() {
+            spatialConfig.points = !spatialConfig.points;
+            spatialData.configure({ pointsVisible: spatialConfig.points });
+        }
+
+        function togglePositions() {
+            spatialConfig.positions = !spatialConfig.positions;
+            spatialData.configure({ positionsVisible: spatialConfig.positions });
+        }
+
+        function toggleSpatial() {
+            spatialConfig.spatial = !spatialConfig.spatial;
+            if (spatialConfig.spatial) {
+                viewer.activateComponent("spatialData");
+            } else {
+                viewer.deactivateComponent("spatialData");
+            }
+        }
+
+        function toggleImages() {
+            spatialConfig.images = !spatialConfig.images;
+            if (spatialConfig.images) {
+                viewer.activateComponent("imagePlane");
+            } else {
+                viewer.deactivateComponent("imagePlane");
+            }
         }
 
         viewer.on("loadingchanged", function (loading) {
