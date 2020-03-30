@@ -324,17 +324,16 @@ export class Viewer extends EventEmitter {
      * var viewer = new Mapillary.Viewer("<element-id>", "<client-id>", "<image-key>");
      * ```
      */
-    constructor(id: string, clientId: string, key?: string, options?: IViewerOptions, parent?: HTMLDocument, token?: string) {
+    constructor(id: string, clientId: string, key?: string, options?: IViewerOptions, container?: HTMLElement, token?: string) {
         super();
 
         options = options != null ? options : {};
 
         Settings.setOptions(options);
         Urls.setOptions(options.url);
-        const dom: DOM = !!parent ? new DOM(parent) : new DOM();
 
         this._navigator = new Navigator(clientId, options, token);
-        this._container = new Container(id, this._navigator.stateService, options, dom);
+        this._container = new Container(id, this._navigator.stateService, options, container);
         this._observer = new Observer(this, this._navigator, this._container);
         this._componentController = new ComponentController(this._container, this._navigator, this._observer, key, options.component);
     }
