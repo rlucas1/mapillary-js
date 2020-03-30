@@ -32,7 +32,7 @@ import {
 } from "../Utils";
 import {RenderMode} from "../Render";
 import {TransitionMode} from "../State";
-import { IPointOfView } from "./interfaces/interfaces";
+import {IPointOfView} from "./interfaces/interfaces";
 import RenderCamera from "../render/RenderCamera";
 import ILatLonAlt from "../geo/interfaces/ILatLonAlt";
 
@@ -324,13 +324,14 @@ export class Viewer extends EventEmitter {
      * var viewer = new Mapillary.Viewer("<element-id>", "<client-id>", "<image-key>");
      * ```
      */
-    constructor (id: string, clientId: string, key?: string, options?: IViewerOptions, dom?: DOM, token?: string) {
+    constructor(id: string, clientId: string, key?: string, options?: IViewerOptions, parent?: HTMLDocument, token?: string) {
         super();
 
         options = options != null ? options : {};
 
         Settings.setOptions(options);
         Urls.setOptions(options.url);
+        const dom: DOM = !!parent ? new DOM(parent) : new DOM();
 
         this._navigator = new Navigator(clientId, options, token);
         this._container = new Container(id, this._navigator.stateService, options, dom);
@@ -617,7 +618,7 @@ export class Viewer extends EventEmitter {
      * ```
      */
     public getZoom(): when.Promise<number> {
-         return when.promise<number>(
+        return when.promise<number>(
             (resolve: (value: number) => void, reject: (reason: Error) => void): void => {
                 this._navigator.stateService.getZoom()
                     .subscribe(
