@@ -25,6 +25,7 @@ import {
     IComponentConfiguration,
 } from "../Component";
 import {
+    DOM,
     EventEmitter,
     Settings,
     Urls,
@@ -323,7 +324,7 @@ export class Viewer extends EventEmitter {
      * var viewer = new Mapillary.Viewer("<element-id>", "<client-id>", "<image-key>");
      * ```
      */
-    constructor (id: string, clientId: string, key?: string, options?: IViewerOptions, token?: string) {
+    constructor (id: string, clientId: string, key?: string, options?: IViewerOptions, dom?: DOM, token?: string) {
         super();
 
         options = options != null ? options : {};
@@ -332,7 +333,7 @@ export class Viewer extends EventEmitter {
         Urls.setOptions(options.url);
 
         this._navigator = new Navigator(clientId, options, token);
-        this._container = new Container(id, this._navigator.stateService, options);
+        this._container = new Container(id, this._navigator.stateService, options, dom);
         this._observer = new Observer(this, this._navigator, this._container);
         this._componentController = new ComponentController(this._container, this._navigator, this._observer, key, options.component);
     }
