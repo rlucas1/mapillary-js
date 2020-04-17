@@ -390,8 +390,7 @@ export class NodeCache {
 
                     image.onerror = (error: ErrorEvent) => {
                         this._imageRequest = null;
-                        console.dir(error);
-                        subscriber.error(new Error(`Failed to load image (${key})`));
+                        subscriber.error(new Error(`Failed to load image (${key}) -> ${error.message}`));
                     };
 
                     let blob: Blob = new Blob([xmlHTTP.response]);

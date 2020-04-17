@@ -50382,8 +50382,7 @@ var NodeCache = /** @class */ (function () {
                 };
                 image.onerror = function (error) {
                     _this._imageRequest = null;
-                    console.dir(error);
-                    subscriber.error(new Error("Failed to load image (" + key + ")"));
+                    subscriber.error(new Error("Failed to load image (" + key + ") -> " + error.message));
                 };
                 var blob = new Blob([xmlHTTP.response]);
                 image.src = window.URL.createObjectURL(blob);
