@@ -390,7 +390,7 @@ export class NodeCache {
 
                     image.onerror = (error: ErrorEvent) => {
                         this._imageRequest = null;
-
+                        console.dir(error);
                         subscriber.error(new Error(`Failed to load image (${key})`));
                     };
 
