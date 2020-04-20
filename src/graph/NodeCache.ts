@@ -376,7 +376,7 @@ export class NodeCache {
 
                     image.onload = (e: Event) => {
                         this._imageRequest = null;
-
+                        debugger
                         if (this._disposed) {
                             window.URL.revokeObjectURL(image.src);
                             subscriber.error(new Error(`Image load was aborted (${key})`));
