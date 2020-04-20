@@ -4,7 +4,7 @@ import {
     Subject,
     Observable,
     Subscriber,
-    Subscription
+    Subscription,
 } from "rxjs";
 
 import {map, tap, startWith, publishReplay, refCount, finalize, first} from "rxjs/operators";
@@ -388,7 +388,7 @@ export class NodeCache {
 
                     image.onload = (e: Event) => {
                         this._imageRequest = null;
-                        console.log("imgSrc : " + image.src)
+                        console.log("imgSrc : " + image.src);
                         if (this._disposed) {
                             window.URL.revokeObjectURL(image.src);
                             subscriber.error(new Error(`Image load was aborted (${key})`));
