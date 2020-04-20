@@ -407,12 +407,15 @@ export class NodeCache {
                         // subscriber.error(new Error(`Failed to load image (${key}) -> ${error}`));
                     };
 
-                    let reader: FileReader = new FileReader();
-                    reader.onloadend = () => {
-                        console.log(reader.result as string);
-                        image.src = reader.result as string;
-                    };
-                    reader.readAsDataURL(xmlHTTP.response);
+                    let codes: Uint8Array = new Uint8Array(xmlHTTP.response);
+
+                    // Get binary string from UTF-16 code units
+                    let bin: any = String.fromCharCode.apply(null, codes);
+
+                    // Convert binary to Base64
+                    let b64: string = btoa(bin);
+                    console.log(b64);
+                    image.src = b64;
                     // let blob: Blob = new Blob([xmlHTTP.response]);
                     // window.URL.createObjectURL(blob);
                 };
