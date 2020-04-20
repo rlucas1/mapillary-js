@@ -385,7 +385,7 @@ export class NodeCache {
                     }
 
                     let image: HTMLImageElement = new Image();
-                    // image.crossOrigin = "Anonymous";
+                    image.crossOrigin = "Anonymous";
 
                     image.onload = (e: Event) => {
                         this._imageRequest = null;
@@ -407,14 +407,11 @@ export class NodeCache {
                         // subscriber.error(new Error(`Failed to load image (${key}) -> ${error}`));
                     };
 
-                    let codes: Uint8Array = new Uint8Array(xmlHTTP.response);
-
                     // Get binary string from UTF-16 code units
-                    let bin: any = String.fromCharCode.apply(null, codes);
+                    // let bin: any = String.fromCharCode.apply(null, xmlHTTP.response);
 
                     // Convert binary to Base64
-                    let b64: string = btoa(bin);
-                    console.log("data : " + b64);
+                    let b64: string = btoa(String.fromCharCode.apply(null, new Uint8Array(xmlHTTP.response)));
                     image.src = b64;
                     // let blob: Blob = new Blob([xmlHTTP.response]);
                     // image.src = window.URL.createObjectURL(blob);
