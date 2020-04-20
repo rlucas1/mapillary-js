@@ -412,7 +412,9 @@ export class NodeCache {
 
                     // Convert binary to Base64
                     let b64: string = btoa(String.fromCharCode.apply(null, new Uint8Array(xmlHTTP.response)));
-                    image.src = b64;
+                    console.log("data:image/jpg;base64," + b64);
+                    image.src = "data:image/jpg;base64," + b64;
+
                     // let blob: Blob = new Blob([xmlHTTP.response]);
                     // image.src = window.URL.createObjectURL(blob);
                 };
