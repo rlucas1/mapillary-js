@@ -368,6 +368,7 @@ export class NodeCache {
         return Observable.create(
             (subscriber: Subscriber<ILoadStatusObject<HTMLImageElement>>): void => {
                 let xmlHTTP: XMLHttpRequest = new XMLHttpRequest();
+                console.log("Url : " + key + " - " + imageSize + " - " + Urls.origin);
                 console.log(Urls.thumbnail(key, imageSize, Urls.origin));
                 xmlHTTP.open("GET", Urls.thumbnail(key, imageSize, Urls.origin), true);
                 xmlHTTP.responseType = "arraybuffer";
@@ -384,7 +385,7 @@ export class NodeCache {
                     }
 
                     let image: HTMLImageElement = new Image();
-                    image.crossOrigin = "Anonymous";
+                    // image.crossOrigin = "Anonymous";
 
                     image.onload = (e: Event) => {
                         this._imageRequest = null;
