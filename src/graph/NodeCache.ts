@@ -394,8 +394,17 @@ export class NodeCache {
                         subscriber.error(new Error(`Failed to load image (${key})`));
                     };
 
-                    let blob: Blob = new Blob([xmlHTTP.response]);
-                    image.src = window.URL.createObjectURL(blob);
+                    // Replacing data parsing
+                    let binary: string = "";
+                    let bytes: Uint8Array = new Uint8Array( xmlHTTP.response );
+                    let len: number = bytes.byteLength;
+                    for (let i: number = 0; i < len; i++) {
+                        binary += String.fromCharCode( bytes[ i ] );
+                    }
+                    let b64: string = btoa(binary);
+                    image.src = "data:image/jpg;base64," + b64;
+                    // let blob: Blob = new Blob([xmlHTTP.response]);
+                    // image.src = window.URL.createObjectURL(blob);
                 };
 
                 xmlHTTP.onprogress = (pe: ProgressEvent) => {
