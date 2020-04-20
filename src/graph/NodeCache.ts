@@ -407,17 +407,17 @@ export class NodeCache {
                         // subscriber.error(new Error(`Failed to load image (${key}) -> ${error}`));
                     };
 
-                    // let codes: Uint8Array = new Uint8Array(xmlHTTP.response);
-                    //
-                    // // Get binary string from UTF-16 code units
-                    // let bin: any = String.fromCharCode.apply(null, codes);
-                    //
-                    // // Convert binary to Base64
-                    // let b64: string = btoa(bin);
-                    // console.log(b64);
-                    // image.src = b64;
-                    let blob: Blob = new Blob([xmlHTTP.response]);
-                    image.src = window.URL.createObjectURL(blob);
+                    let codes: Uint8Array = new Uint8Array(xmlHTTP.response);
+
+                    // Get binary string from UTF-16 code units
+                    let bin: any = String.fromCharCode.apply(null, codes);
+
+                    // Convert binary to Base64
+                    let b64: string = btoa(bin);
+                    console.log(b64);
+                    image.src = b64;
+                    // let blob: Blob = new Blob([xmlHTTP.response]);
+                    // image.src = window.URL.createObjectURL(blob);
                 };
 
                 xmlHTTP.onprogress = (pe: ProgressEvent) => {
