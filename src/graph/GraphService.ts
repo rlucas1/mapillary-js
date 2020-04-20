@@ -58,12 +58,13 @@ export class GraphService {
      */
     constructor(graph: Graph, imageLoadingService: ImageLoadingService) {
         this._graph$ = observableConcat(
-                observableOf(graph),
-                graph.changed$).pipe(
+            observableOf(graph),
+            graph.changed$).pipe(
             publishReplay(1),
             refCount());
 
-        this._graph$.subscribe(() => { /*noop*/ });
+        this._graph$.subscribe(() => { /*noop*/
+        });
 
         this._graphMode = GraphMode.Spatial;
         this._graphModeSubject$ = new Subject<GraphMode>();
@@ -72,7 +73,8 @@ export class GraphService {
             publishReplay(1),
             refCount());
 
-        this._graphMode$.subscribe(() => { /*noop*/ });
+        this._graphMode$.subscribe(() => { /*noop*/
+        });
 
         this._imageLoadingService = imageLoadingService;
 
@@ -149,10 +151,13 @@ export class GraphService {
         const node$: Observable<Node> = firstGraph$.pipe(
             map(
                 (graph: Graph): Node => {
+                    console.log("getNode : " + key);
                     return graph.getNode(key);
                 }),
             mergeMap(
                 (node: Node): Observable<Node> => {
+                    console.log("isCached : " + node.assetsCached);
+                    console.dir(node);
                     return node.assetsCached ?
                         observableOf(node) :
                         node.cacheAssets$();
@@ -162,6 +167,8 @@ export class GraphService {
 
         node$.subscribe(
             (node: Node): void => {
+                console.log("next node");
+                console.dir(node);
                 this._imageLoadingService.loadnode$.next(node);
             },
             (error: Error): void => {
@@ -238,7 +245,9 @@ export class GraphService {
                     this._removeFromArray(sequenceSubscription, this._sequenceSubscriptions);
                 }))
             .subscribe(
-                (graph: Graph): void => { return; },
+                (graph: Graph): void => {
+                    return;
+                },
                 (error: Error): void => {
                     console.error(`Failed to cache sequence edges (${key}).`, error);
                 });
@@ -316,7 +325,9 @@ export class GraphService {
                         this._removeFromArray(spatialSubscription, this._spatialSubscriptions);
                     }))
                 .subscribe(
-                    (graph: Graph): void => { return; },
+                    (graph: Graph): void => {
+                        return;
+                    },
                     (error: Error): void => {
                         console.error(`Failed to cache spatial edges (${key}).`, error);
                     });

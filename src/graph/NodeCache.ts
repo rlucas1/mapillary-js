@@ -1,4 +1,11 @@
-import {of as observableOf, combineLatest as observableCombineLatest, Subject, Observable, Subscriber, Subscription} from "rxjs";
+import {
+    of as observableOf,
+    combineLatest as observableCombineLatest,
+    Subject,
+    Observable,
+    Subscriber,
+    Subscription
+} from "rxjs";
 
 import {map, tap, startWith, publishReplay, refCount, finalize, first} from "rxjs/operators";
 
@@ -53,10 +60,10 @@ export class NodeCache {
         this._disposed = false;
 
         this._image = null;
-        this._loadStatus = { loaded: 0, total: 0 };
+        this._loadStatus = {loaded: 0, total: 0};
         this._mesh = null;
-        this._sequenceEdges = { cached: false, edges: [] };
-        this._spatialEdges = { cached: false, edges: [] };
+        this._sequenceEdges = {cached: false, edges: []};
+        this._spatialEdges = {cached: false, edges: []};
 
         this._imageChanged$ = new Subject<HTMLImageElement>();
         this._image$ = this._imageChanged$.pipe(
@@ -72,7 +79,8 @@ export class NodeCache {
             publishReplay(1),
             refCount());
 
-        this._sequenceEdgesSubscription = this._sequenceEdges$.subscribe(() => { /*noop*/ });
+        this._sequenceEdgesSubscription = this._sequenceEdges$.subscribe(() => { /*noop*/
+        });
 
         this._spatialEdgesChanged$ = new Subject<IEdgeStatus>();
         this._spatialEdges$ = this._spatialEdgesChanged$.pipe(
@@ -80,7 +88,8 @@ export class NodeCache {
             publishReplay(1),
             refCount());
 
-        this._spatialEdgesSubscription = this._spatialEdges$.subscribe(() => { /*noop*/ });
+        this._spatialEdgesSubscription = this._spatialEdges$.subscribe(() => { /*noop*/
+        });
 
         this._cachingAssets$ = null;
     }
@@ -190,8 +199,8 @@ export class NodeCache {
             Settings.baseImageSize;
 
         this._cachingAssets$ = observableCombineLatest(
-                this._cacheImage$(key, imageSize),
-                this._cacheMesh$(key, merged)).pipe(
+            this._cacheImage$(key, imageSize),
+            this._cacheMesh$(key, merged)).pipe(
             map(
                 ([imageStatus, meshStatus]: [ILoadStatusObject<HTMLImageElement>, ILoadStatusObject<IMesh>]): NodeCache => {
                     this._loadStatus.loaded = 0;
@@ -227,7 +236,8 @@ export class NodeCache {
                 (nodeCache: NodeCache): void => {
                     this._imageChanged$.next(this._image);
                 },
-                (error: Error): void => { /*noop*/ });
+                (error: Error): void => { /*noop*/
+                });
 
         return this._cachingAssets$;
     }
@@ -269,7 +279,8 @@ export class NodeCache {
                 (nodeCache: NodeCache): void => {
                     this._imageChanged$.next(this._image);
                 },
-                (error: Error): void => { /*noop*/ });
+                (error: Error): void => { /*noop*/
+                });
 
         return cacheImage$;
     }
@@ -280,7 +291,7 @@ export class NodeCache {
      * @param {Array<IEdge>} edges - Sequence edges to cache.
      */
     public cacheSequenceEdges(edges: IEdge[]): void {
-        this._sequenceEdges = { cached: true, edges: edges };
+        this._sequenceEdges = {cached: true, edges: edges};
         this._sequenceEdgesChanged$.next(this._sequenceEdges);
     }
 
@@ -290,7 +301,7 @@ export class NodeCache {
      * @param {Array<IEdge>} edges - Spatial edges to cache.
      */
     public cacheSpatialEdges(edges: IEdge[]): void {
-        this._spatialEdges = { cached: true, edges: edges };
+        this._spatialEdges = {cached: true, edges: edges};
         this._spatialEdgesChanged$.next(this._spatialEdges);
     }
 
@@ -310,8 +321,8 @@ export class NodeCache {
         this._mesh = null;
         this._loadStatus.loaded = 0;
         this._loadStatus.total = 0;
-        this._sequenceEdges = { cached: false, edges: [] };
-        this._spatialEdges = { cached: false, edges: [] };
+        this._sequenceEdges = {cached: false, edges: []};
+        this._spatialEdges = {cached: false, edges: []};
 
         this._imageChanged$.next(null);
         this._sequenceEdgesChanged$.next(this._sequenceEdges);
@@ -332,7 +343,7 @@ export class NodeCache {
      * Reset the sequence edges.
      */
     public resetSequenceEdges(): void {
-        this._sequenceEdges = { cached: false, edges: [] };
+        this._sequenceEdges = {cached: false, edges: []};
         this._sequenceEdgesChanged$.next(this._sequenceEdges);
     }
 
@@ -340,7 +351,7 @@ export class NodeCache {
      * Reset the spatial edges.
      */
     public resetSpatialEdges(): void {
-        this._spatialEdges = { cached: false, edges: [] };
+        this._spatialEdges = {cached: false, edges: []};
         this._spatialEdgesChanged$.next(this._spatialEdges);
     }
 
@@ -357,6 +368,7 @@ export class NodeCache {
         return Observable.create(
             (subscriber: Subscriber<ILoadStatusObject<HTMLImageElement>>): void => {
                 let xmlHTTP: XMLHttpRequest = new XMLHttpRequest();
+                console.log(Urls.thumbnail(key, imageSize, Urls.origin));
                 xmlHTTP.open("GET", Urls.thumbnail(key, imageSize, Urls.origin), true);
                 xmlHTTP.responseType = "arraybuffer";
                 xmlHTTP.timeout = 15000;
@@ -376,7 +388,7 @@ export class NodeCache {
 
                     image.onload = (e: Event) => {
                         this._imageRequest = null;
-                        debugger
+                        console.log("imgSrc : " + image.src)
                         if (this._disposed) {
                             window.URL.revokeObjectURL(image.src);
                             subscriber.error(new Error(`Image load was aborted (${key})`));
@@ -384,7 +396,7 @@ export class NodeCache {
                             return;
                         }
 
-                        subscriber.next({ loaded: { loaded: pe.loaded, total: pe.total }, object: image });
+                        subscriber.next({loaded: {loaded: pe.loaded, total: pe.total}, object: image});
                         subscriber.complete();
                     };
 
@@ -403,7 +415,7 @@ export class NodeCache {
                         return;
                     }
 
-                    subscriber.next({loaded: { loaded: pe.loaded, total: pe.total }, object: null });
+                    subscriber.next({loaded: {loaded: pe.loaded, total: pe.total}, object: null});
                 };
 
                 xmlHTTP.onerror = (error: Event) => {
@@ -462,9 +474,9 @@ export class NodeCache {
 
                     let mesh: IMesh = xmlHTTP.status === 200 ?
                         MeshReader.read(new Buffer(xmlHTTP.response)) :
-                        { faces: [], vertices: [] };
+                        {faces: [], vertices: []};
 
-                    subscriber.next({ loaded: { loaded: pe.loaded, total: pe.total }, object: mesh });
+                    subscriber.next({loaded: {loaded: pe.loaded, total: pe.total}, object: mesh});
                     subscriber.complete();
                 };
 
@@ -473,7 +485,7 @@ export class NodeCache {
                         return;
                     }
 
-                    subscriber.next({ loaded: { loaded: pe.loaded, total: pe.total }, object: null });
+                    subscriber.next({loaded: {loaded: pe.loaded, total: pe.total}, object: null});
                 };
 
                 xmlHTTP.onerror = (e: Event) => {
@@ -514,8 +526,8 @@ export class NodeCache {
      */
     private _createEmptyMeshLoadStatus(): ILoadStatusObject<IMesh> {
         return {
-            loaded: { loaded: 0, total: 0 },
-            object: { faces: [], vertices: [] },
+            loaded: {loaded: 0, total: 0},
+            object: {faces: [], vertices: []},
         };
     }
 

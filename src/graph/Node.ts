@@ -571,6 +571,7 @@ export class Node {
      * @ignore
      */
     public cacheAssets$(): Observable<Node> {
+        console.log("caching node");
         return this._cache.cacheAssets$(this.key, this.pano, this.merged).pipe(
             map(
                 (): Node => {
