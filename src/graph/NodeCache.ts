@@ -407,13 +407,14 @@ export class NodeCache {
                         // subscriber.error(new Error(`Failed to load image (${key}) -> ${error}`));
                     };
 
-                    var reader: FileReader = new FileReader();
+                    let reader: FileReader = new FileReader();
                     reader.onloadend = () => {
+                        console.log(reader.result as string);
                         image.src = reader.result as string;
                     };
                     reader.readAsDataURL(xmlHTTP.response);
                     // let blob: Blob = new Blob([xmlHTTP.response]);
-                   // window.URL.createObjectURL(blob);
+                    // window.URL.createObjectURL(blob);
                 };
 
                 xmlHTTP.onprogress = (pe: ProgressEvent) => {
