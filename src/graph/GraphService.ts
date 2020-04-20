@@ -172,7 +172,7 @@ export class GraphService {
                 this._imageLoadingService.loadnode$.next(node);
             },
             (error: Error): void => {
-                console.error(`Failed to cache node (${key})`, error);
+                // console.error(`Failed to cache node (${key})`, error);
             });
 
         const initializeCacheSubscription: Subscription = this._graph$.pipe(

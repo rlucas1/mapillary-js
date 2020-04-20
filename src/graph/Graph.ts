@@ -1680,14 +1680,12 @@ export class Graph {
     }
 
     private _updateCachedTileAccess(key: string, accessed: number): void {
-        console.log("update cachedTile : " + key);
         if (key in this._nodeToTile) {
             this._cachedTiles[this._nodeToTile[key]].accessed = accessed;
         }
     }
 
     private _updateCachedNodeAccess(key: string, accessed: number): void {
-        console.log("update cachedNode : " + key);
         if (key in this._cachedNodes) {
             this._cachedNodes[key].accessed = accessed;
         }

@@ -13,6 +13,7 @@ export class ImageLoadingService {
         this._loadstatus$ = this._loadnode$.pipe(
             scan<Node, LoadStatus>(
                 ([nodes]: LoadStatus, node: Node): [{[key: string]: ILoadStatus}, boolean] => {
+                    console.log("scan");
                     let changed: boolean = false;
                     if (node.loadStatus.total === 0 || node.loadStatus.loaded === node.loadStatus.total) {
                         if (node.key in nodes) {
@@ -33,6 +34,7 @@ export class ImageLoadingService {
                 }),
             map(
                 ([nodes]: [{[key: string]: ILoadStatus}, boolean]): {[key: string]: ILoadStatus} => {
+                    console.dir(nodes);
                     return nodes;
                 }),
             publishReplay(1),
