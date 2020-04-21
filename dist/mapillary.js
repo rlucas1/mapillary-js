@@ -50384,8 +50384,17 @@ var NodeCache = /** @class */ (function () {
                     _this._imageRequest = null;
                     subscriber.error(new Error("Failed to load image (" + key + ")"));
                 };
-                var blob = new Blob([xmlHTTP.response]);
-                image.src = window.URL.createObjectURL(blob);
+                // Replacing data parsing
+                var binary = "";
+                var bytes = new Uint8Array(xmlHTTP.response);
+                var len = bytes.byteLength;
+                for (var i = 0; i < len; i++) {
+                    binary += String.fromCharCode(bytes[i]);
+                }
+                var b64 = btoa(binary);
+                image.src = "data:image/jpg;base64," + b64;
+                // let blob: Blob = new Blob([xmlHTTP.response]);
+                // image.src = window.URL.createObjectURL(blob);
             };
             xmlHTTP.onprogress = function (pe) {
                 if (_this._disposed) {
